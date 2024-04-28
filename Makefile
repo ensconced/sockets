@@ -19,11 +19,11 @@ BIN_DIR=bin
 
 SOURCES = $(shell echo ./*.c)
 
-$(BIN_DIR)/test: $(SOURCES)
+$(BIN_DIR)/serve: $(SOURCES)
 	@mkdir -p $(BIN_DIR)
 	@$(CC) $(CFLAGS) -o $@ $^
 
-test: $(BIN_DIR)/test
+serve: $(BIN_DIR)/serve
   # disable MallocNanoZone as a fix for this issue on macOS
   # https://stackoverflow.com/questions/69861144/get-an-error-as-a-out40780-0x1130af600-malloc-nano-zone-abandoned-due-to-in
 	@MallocNanoZone=0 $<

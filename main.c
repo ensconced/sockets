@@ -53,7 +53,6 @@ int main(void) {
       .sin_family = AF_INET,
       .sin_port = htons(PORT),
   };
-  addr.sin_len = sizeof(addr);
 
   int bind_err = bind(socket_fd, (struct sockaddr *)(&addr), sizeof(addr));
   if (bind_err) {
