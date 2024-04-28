@@ -7,6 +7,8 @@
 #include <sys/socket.h>
 #include <sys/types.h>
 
+#define MAX_RESPONSE_SIZE 1024
+
 const int PORT = 9898;
 const char *BIND_ADDR_STR = "0.0.0.0";
 const char *RESPONSE_BODY =
@@ -17,9 +19,17 @@ const char *RESPONSE_BODY =
     "<p>You can see the source code on <a "
     "href=\"https://github.com/ensconced/sockets/tree/main\" "
     "target=\"_blank\">github</a>.</p>";
-const size_t MAX_RESPONSE_SIZE = 1024;
+char response[MAX_RESPONSE_SIZE] = "";
 
 int main(void) {
+  snprintf(response, MAX_RESPONSE_SIZE,
+           "HTTP/1.1 200 OK\n"
+           "Content-Type: text/html\n"
+           "Content-Length: %ld\n"
+           "\n"
+           "%s\r\n",
+           strlen(RESPONSE_BODY), RESPONSE_BODY);
+
   int socket_fd = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
   if (socket_fd == -1) {
     fprintf(stderr, "Failed to create socket. %s", strerror(errno));
@@ -65,15 +75,6 @@ int main(void) {
       fprintf(stderr, "Failed to accept connection. %s", strerror(errno));
       continue;
     }
-
-    char response[MAX_RESPONSE_SIZE] = "";
-    snprintf(response, MAX_RESPONSE_SIZE,
-             "HTTP/1.1 200 OK\n"
-             "Content-Type: text/html\n"
-             "Content-Length: %ld\n"
-             "\n"
-             "%s\r\n",
-             strlen(RESPONSE_BODY), RESPONSE_BODY);
 
     send(acc_sock_fd, response, strlen(response), 0);
   }
