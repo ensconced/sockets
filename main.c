@@ -9,11 +9,14 @@
 
 const int PORT = 9898;
 const char *BIND_ADDR_STR = "0.0.0.0";
-const char *RESPONSE_BODY = "<h1>Joe's home page</h1>"
-                            "<p>Hi!</p>"
-                            "<p>This is my web page.</p>"
-                            "<p>It is servedby a very very simple server "
-                            "that I wrote in plain C.</p>";
+const char *RESPONSE_BODY =
+    "<h1>Joe's home page</h1>"
+    "<p>Hi!</p>"
+    "<p>This is my web page.</p>"
+    "<p>It is served by a very very simple server that I wrote in plain C.</p>"
+    "<p>You can see the source code on <a "
+    "href=\"https://github.com/ensconced/sockets/tree/main\" "
+    "target=\"_blank\">github</a>.</p>";
 const size_t MAX_RESPONSE_SIZE = 1024;
 
 int main(void) {
