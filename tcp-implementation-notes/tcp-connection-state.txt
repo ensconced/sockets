@@ -1,0 +1,96 @@
+   The
+   maintenance of a TCP connection requires maintaining state for
+   several variables.  We conceive of these variables being stored in a
+   connection record called a Transmission Control Block or TCB.  Among
+   the variables stored in the TCB are the local and remote IP addresses
+   and port numbers, the IP security level, and compartment of the
+   connection (see Appendix A.1), pointers to the user's send and
+   receive buffers, pointers to the retransmit queue and to the current
+   segment.  In addition, several variables relating to the send and
+   receive sequence numbers are stored in the TCB.
+
+    +==========+=====================================================+
+    | Variable | Description                                         |
+    +==========+=====================================================+
+    | SND.UNA  | send unacknowledged                                 |
+    +----------+-----------------------------------------------------+
+    | SND.NXT  | send next                                           |
+    +----------+-----------------------------------------------------+
+    | SND.WND  | send window                                         |
+    +----------+-----------------------------------------------------+
+    | SND.UP   | send urgent pointer                                 |
+    +----------+-----------------------------------------------------+
+    | SND.WL1  | segment sequence number used for last window update |
+    +----------+-----------------------------------------------------+
+    | SND.WL2  | segment acknowledgment number used for last window  |
+    |          | update                                              |
+    +----------+-----------------------------------------------------+
+    | ISS      | initial send sequence number                        |
+    +----------+-----------------------------------------------------+
+
+                     Table 2: Send Sequence Variables
+
+              +==========+=================================+
+              | Variable | Description                     |
+              +==========+=================================+
+              | RCV.NXT  | receive next                    |
+              +----------+---------------------------------+
+              | RCV.WND  | receive window                  |
+              +----------+---------------------------------+
+              | RCV.UP   | receive urgent pointer          |
+              +----------+---------------------------------+
+              | IRS      | initial receive sequence number |
+              +----------+---------------------------------+
+
+                   Table 3: Receive Sequence Variables
+
+   The following diagrams may help to relate some of these variables to
+   the sequence space.
+
+                      1         2          3          4
+                 ----------|----------|----------|----------
+                        SND.UNA    SND.NXT    SND.UNA
+                                             +SND.WND
+
+           1 - old sequence numbers that have been acknowledged
+           2 - sequence numbers of unacknowledged data
+           3 - sequence numbers allowed for new data transmission
+           4 - future sequence numbers that are not yet allowed
+
+                       Figure 3: Send Sequence Space
+
+   The send window is the portion of the sequence space labeled 3 in
+   Figure 3.
+
+                          1          2          3
+                      ----------|----------|----------
+                             RCV.NXT    RCV.NXT
+                                       +RCV.WND
+
+           1 - old sequence numbers that have been acknowledged
+           2 - sequence numbers allowed for new reception
+           3 - future sequence numbers that are not yet allowed
+
+                      Figure 4: Receive Sequence Space
+
+   The receive window is the portion of the sequence space labeled 2 in
+   Figure 4.
+
+   There are also some variables used frequently in the discussion that
+   take their values from the fields of the current segment.
+
+               +==========+===============================+
+               | Variable | Description                   |
+               +==========+===============================+
+               | SEG.SEQ  | segment sequence number       |
+               +----------+-------------------------------+
+               | SEG.ACK  | segment acknowledgment number |
+               +----------+-------------------------------+
+               | SEG.LEN  | segment length                |
+               +----------+-------------------------------+
+               | SEG.WND  | segment window                |
+               +----------+-------------------------------+
+               | SEG.UP   | segment urgent pointer        |
+               +----------+-------------------------------+
+
+                    Table 4: Current Segment Variables

@@ -1,0 +1,5 @@
+The application byte-stream is conveyed over the network via TCP segments, with each TCP segment sent as an Internet Protocol (IP) datagram.
+
+A TCP header follows the IP headers, supplying information specifc to TCP.
+
+The maintenance of a TCP connection requires maintaining state for several variables. We conceive of these variables being stored in a connection record called a Transmission Control Block or TCB

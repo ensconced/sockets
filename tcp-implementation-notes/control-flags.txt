@@ -1,0 +1,39 @@
+CWR:
+1 bit
+
+Congestion Window Reduced (see [6]).
+
+ECE:
+1 bit
+
+ECN-Echo (see [6]).
+
+URG:
+1 bit
+
+Urgent pointer field is significant.
+
+ACK:
+1 bit
+
+Acknowledgment field is significant.
+
+PSH:
+1 bit
+
+Push function (see the Send Call description in Section 3.9.1).
+
+RST:
+1 bit
+
+Reset the connection.
+
+SYN:
+1 bit
+
+Synchronize sequence numbers.
+
+FIN:
+1 bit
+
+No more data from sender.

@@ -1,0 +1,5 @@
+Operations that I don't currently have in hardware but will probably need
+
+- 32 bit registers...
+- 32 bit unsigned arithmetic
+- 16 bit one's complement addition
