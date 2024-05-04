@@ -9,3 +9,10 @@ To run it:
   make serve &!
   ```
 - the server is now running and you can quit the ssh session
+
+### using wireshark
+
+```
+ssh -X deb
+wireshark
+```

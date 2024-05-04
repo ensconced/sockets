@@ -75,6 +75,15 @@ int main(void) {
       continue;
     }
 
+    // TODO - I'm actually sending the response here as soon as the TCP
+    // connection is established. i.e. I'm not even waiting to receive an HTTP
+    // request. If you examine the packets in wireshark you'll see that the
+    // server actually sends the response before it received the request, which
+    // is pretty weird. Presumably this would also break if the HTTP client
+    // re-used the connection to send a second HTTP request - the second request
+    // would never get a response.
+    // Anyway, I should probably wait until I have a full request until I send
+    // the response.
     send(acc_sock_fd, response, strlen(response), 0);
   }
 }
