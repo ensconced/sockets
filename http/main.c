@@ -13,6 +13,7 @@ const int PORT = 9898;
 const char *BIND_ADDR_STR = "0.0.0.0";
 const char *RESPONSE_BODY =
     "<!DOCTYPE html>"
+    "<html>"
     "<head>"
     "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\" />"
     "</head>"
@@ -24,16 +25,17 @@ const char *RESPONSE_BODY =
     "<p>You can see the source code on <a "
     "href=\"https://github.com/ensconced/sockets/tree/main\" "
     "target=\"_blank\">github</a>.</p>"
-    "</body>";
+    "</body>"
+    "</html>";
+
 char response[MAX_RESPONSE_SIZE] = "";
 
 int main(void) {
   snprintf(response, MAX_RESPONSE_SIZE,
            "HTTP/1.1 200 OK\n"
            "Content-Type: text/html\n"
-           "Content-Length: %ld\n"
-           "\n"
-           "%s\r\n",
+           "Content-Length: %ld\n\n"
+           "%s",
            strlen(RESPONSE_BODY), RESPONSE_BODY);
 
   int socket_fd = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
