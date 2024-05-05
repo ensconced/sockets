@@ -4,6 +4,10 @@
 
 #define MAX_CONNECTIONS 256
 
+typedef struct {
+  connection *connections;
+} tcp_stack;
+
 typedef enum {
   LISTEN,
   SYN_RECEIVED,
@@ -44,12 +48,16 @@ typedef enum {
   TIME_WAIT_TIMEOUT
 } timeout_type;
 
-// threads:
-// 1. main thread: accept and process incoming packets
-// 2. handle timeouts
-// 3. handle user actions
+// 1. main thread: handles user actions
+// 2. packet processing thread: accepts and processes incoming packets.
+//    - continually takes packet as they arrive (this will be blocking).
+//    - if the packet matches an open connection:
+//      - if there is a receive request waiting, send the payload to that
+//      - else, push it to a big buffer so be used if a receive action occurs
+//    - else, discard it? or whatever the spec says to do...
+// 3. timeout processing thread: handles timeouts
 // each one needs to hold the mutex for the connections array to do anything
-// with any of the connections
+// with any of the connections...
 
 ip_datagram take_ip_datagram(void) {
   // TODO - I guess here take any datagrams tagged as being for the TCP
@@ -145,17 +153,17 @@ void handle_timeouts(connection *connections) {
   }
 }
 
-int main(void) {
+tcp_stack tcp_init(void) {
   connection *connections = malloc(sizeof(connection) * MAX_CONNECTIONS);
   if (connections == 0) {
     fprintf(stderr, "Failed to malloc connections\n");
     exit(1);
   }
 
-  pthread_t user_action_handler_thread_id;
-  if (pthread_create(&user_action_handler_thread_id, NULL, handle_user_actions,
-                     connections) != 0) {
-    fprintf(stderr, "Failed to create user action handling thread\n");
+  pthread_t incoming_datagram_handler_thread_id;
+  if (pthread_create(&incoming_datagram_handler_thread_id, NULL,
+                     handle_incoming_datagrams, connections) != 0) {
+    fprintf(stderr, "Failed to create datagram handling thread\n");
     exit(1);
   };
 
@@ -166,5 +174,10 @@ int main(void) {
     exit(1);
   };
 
-  handle_incoming_datagrams(connections);
+  return (tcp_stack){.connections = connections};
+}
+
+int main(void) {
+  tcp_stack stack = tcp_init();
+  connection *conn = open_passive_connection(&stack);
 }
