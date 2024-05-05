@@ -32,11 +32,17 @@ typedef struct {
   ip_datagram_type type;
 } ip_datagram;
 
-typedef enum { OPEN, CLOSE } user_action_type;
+typedef enum { OPEN, SEND, RECEIVE, CLOSE, ABORT, STATUS } user_action_type;
 
 typedef struct {
   user_action_type type;
 } user_action;
+
+typedef enum {
+  USER_TIMEOUT,
+  RETRANSMISSION_TIMEOUT,
+  TIME_WAIT_TIMEOUT
+} timeout_type;
 
 // threads:
 // 1. main thread: accept and process incoming packets
@@ -54,37 +60,52 @@ user_action take_user_action(void) {
   // TODO
 }
 
-void process_syn(ip_datagram datagram, connection *connections) {
+void process_syn(ip_datagram datagram, connection *connection) {
   // TODO
 }
 
-void process_ack(ip_datagram datagram, connection *connections) {
+void process_ack(ip_datagram datagram, connection *connection) {
   // TODO
 }
 
-void process_fin(ip_datagram datagram, connection *connections) {
+void process_fin(ip_datagram datagram, connection *connection) {
   // TODO
+}
+
+connection *find_datagram_connection(ip_datagram datagram) {
+  // TODO
+  // A natural way to think about processing incoming segments is to imagine
+  // that they are first tested for proper sequence number (i.e., that their
+  // contents lie in the range of the expected "receive window" in the sequence
+  // number space) and then that they are generally queued and processed in
+  // sequence number order.
 }
 
 void process_datagram(ip_datagram datagram, connection *connections) {
+  connection *conn = find_datagram_connection();
   switch (datagram.type) {
   case SYN: {
-    process_syn(datagram, connections);
+    process_syn(datagram, conn);
     break;
   }
   case ACK: {
-    process_ack(datagram, connections);
+    process_ack(datagram, conn);
     break;
   }
   case FIN: {
-    process_fin(datagram, connections);
+    process_fin(datagram, conn);
     break;
   }
   }
 }
 
 void process_open(user_action action, connection *connections) {
-  // TODO
+  // 1. create new connection
+  // 2. fill in fields on connection - some will be left blank until later if
+  //    mode is passive
+  // 3. obtain mutex
+  // 4. add connection to connections array
+  // 5. release mutex
 }
 
 void process_close(user_action action, connection *connections) {
@@ -118,6 +139,12 @@ void handle_incoming_datagrams(connection *connections) {
   }
 }
 
+void handle_timeouts(connection *connections) {
+  while (1) {
+    // TODO -
+  }
+}
+
 int main(void) {
   connection *connections = malloc(sizeof(connection) * MAX_CONNECTIONS);
   if (connections == 0) {
@@ -125,8 +152,19 @@ int main(void) {
     exit(1);
   }
 
-  // TODO - create user action handling thread
-  // TODO - create timeout handling thread
+  pthread_t user_action_handler_thread_id;
+  if (pthread_create(&user_action_handler_thread_id, NULL, handle_user_actions,
+                     connections) != 0) {
+    fprintf(stderr, "Failed to create user action handling thread\n");
+    exit(1);
+  };
+
+  pthread_t timeout_handler_thread_id;
+  if (pthread_create(&timeout_handler_thread_id, NULL, handle_timeouts,
+                     connections) != 0) {
+    fprintf(stderr, "Failed to create timeout handling thread\n");
+    exit(1);
+  };
 
   handle_incoming_datagrams(connections);
 }
