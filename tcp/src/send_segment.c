@@ -1,7 +1,6 @@
-#pragma once
-
 #include <netinet/in.h>
 #include <stdint.h>
+#include <string.h>
 #include <sys/socket.h>
 
 #include "./lib.h"
@@ -55,10 +54,10 @@ uint16_t compute_checksum(uint32_t source_ip, uint32_t dest_ip, uint8_t *data,
   // Adding the first one of overflows may actually have created another
   // overflow. We can simply repeat the same operation to account for this:
   overflow = acc >> 16;
-  return acc + overflow;
+  return (uint16_t)(acc + overflow);
 }
 
-void tcp_send_segment(tcp_stack *stack, tcp_connection *conn, uint8_t payload,
+void tcp_send_segment(tcp_stack *stack, tcp_connection *conn, uint8_t *payload,
                       size_t payload_len, uint16_t max_segment_size) {
   pthread_mutex_lock(&stack->raw_socket.mutex);
 
@@ -107,24 +106,26 @@ void tcp_send_segment(tcp_stack *stack, tcp_connection *conn, uint8_t payload,
   }
   // ...now that we know where the payload is going, we can insert the correct
   // value for the data_offset.
-  *data_offset_ptr = ((ptr - data) / 4) << 4;
+  uint8_t data_byte_offset = (uint8_t)(ptr - data);
+  uint8_t data_word_offset = data_byte_offset / 4;
+  *data_offset_ptr = (uint8_t)(data_word_offset << 4);
 
   // append the actual data
   memcpy(ptr, payload, payload_len);
 
   // and now we can insert the correct value for the checksum
-  uint16_t data_len = ptr - data;
+  uint16_t data_len = (uint16_t)(ptr - data);
   uint16_t checksum =
-      compute_checksum(conn->local_socket.ipv4_addr,
-                       conn->remote_socket.ipv4_addr, data, data_len);
-  memcpy(checksum_ptr, htons(checksum), sizeof(checksum));
+      htons(compute_checksum(conn->local_socket.ipv4_addr,
+                             conn->remote_socket.ipv4_addr, data, data_len));
+  memcpy(checksum_ptr, &checksum, sizeof(checksum));
 
   struct sockaddr_in dest_addr = {
       .sin_family = AF_INET,
       .sin_addr =
           (struct in_addr){.s_addr = htonl(conn->remote_socket.ipv4_addr)},
   };
-  sendto(stack->raw_socket.fd, data, data_len, 0, &dest_addr,
-         sizeof(dest_addr));
+  sendto(stack->raw_socket.fd, data, data_len, 0,
+         (struct sockaddr *)(&dest_addr), sizeof(dest_addr));
   pthread_mutex_unlock(&stack->raw_socket.mutex);
 }

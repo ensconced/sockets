@@ -1,5 +1,13 @@
 # TODO
 
+TODOs in send_segment:
+
+seq_number
+ack_number
+flags
+window
+urgent_pointer
+
 ### TCP
 
 - implement TCP

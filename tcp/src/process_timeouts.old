@@ -1,10 +1,11 @@
+#include "./lib.h"
 typedef enum {
   USER_TIMEOUT,
   RETRANSMISSION_TIMEOUT,
   TIME_WAIT_TIMEOUT
 } timeout_type;
 
-void handle_timeouts(connection *connections) {
+void handle_timeouts(tcp_connection *connections) {
   while (1) {
     // TODO -
   }

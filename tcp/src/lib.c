@@ -26,7 +26,7 @@ tcp_connection *tcp_open_passive(tcp_stack *stack, tcp_socket local_socket) {
       conn->local_socket = local_socket;
       // We'll fill in the remote socket at a later point (when we receive a
       // SYN).
-      conn->remote_socket = (tcp_socket){};
+      conn->remote_socket = (tcp_socket){0};
       break;
     }
   }

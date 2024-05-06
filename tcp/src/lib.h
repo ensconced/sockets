@@ -7,23 +7,6 @@
 #include <stdlib.h>
 #include <sys/socket.h>
 
-typedef struct {
-  tcp_connection *buffer;
-  size_t length;
-  pthread_mutex_t mutex;
-} tcp_connections;
-
-typedef struct {
-  int fd;
-  uint8_t *send_buffer;
-  pthread_mutex_t mutex;
-} tcp_raw_socket;
-
-typedef struct {
-  tcp_connections connections;
-  tcp_raw_socket raw_socket;
-} tcp_stack;
-
 typedef enum {
   CLOSED,
   LISTEN,
@@ -52,8 +35,24 @@ typedef struct {
   tcp_socket remote_socket;
 } tcp_connection;
 
-tcp_stack tcp_init(void);
+typedef struct {
+  tcp_connection *buffer;
+  size_t length;
+  pthread_mutex_t mutex;
+} tcp_connections;
 
+typedef struct {
+  int fd;
+  uint8_t *send_buffer;
+  pthread_mutex_t mutex;
+} tcp_raw_socket;
+
+typedef struct {
+  tcp_connections connections;
+  tcp_raw_socket raw_socket;
+} tcp_stack;
+
+tcp_stack tcp_init(void);
 tcp_connection *tcp_open_passive(tcp_stack *stack, tcp_socket local_socket);
 tcp_connection *tcp_open_active(tcp_stack *stack, tcp_socket local_socket,
                                 tcp_socket remote_socket);
