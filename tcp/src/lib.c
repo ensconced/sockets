@@ -5,51 +5,10 @@
 #include <stdlib.h>
 #include <sys/socket.h>
 
+#include "./lib.h"
+
 #define MAX_CONNECTIONS 256
-
-typedef struct {
-  tcp_connection *buffer;
-  size_t length;
-  pthread_mutex_t mutex;
-} tcp_connections;
-
-typedef struct {
-  int fd;
-  pthread_mutex_t mutex;
-} tcp_raw_socket;
-
-typedef struct {
-  tcp_connections connections;
-  tcp_raw_socket raw_socket;
-} tcp_stack;
-
-typedef enum {
-  CLOSED,
-  LISTEN,
-  SYN_RECEIVED,
-  SYN_SENT,
-  ESTABLISHED,
-  FIN_WAIT_1,
-  FIN_WAIT_2,
-  CLOSE_WAIT,
-  CLOSING,
-  LAST_ACK,
-  TIME_WAIT
-} tcp_connection_state;
-
-typedef enum { PASSIVE, ACTIVE } tcp_connection_mode;
-
-typedef struct {
-  uint32_t ipv4_addr;
-  uint16_t port;
-} tcp_socket;
-
-typedef struct {
-  tcp_connection_state state;
-  tcp_connection_mode mode;
-  tcp_socket local_socket;
-  tcp_socket remote_socket;
-} tcp_connection;
+#define RAW_SOCKET_SEND_BUFFER_LEN 65536
 
 tcp_connection *tcp_open_passive(tcp_stack *stack, tcp_socket local_socket) {
   tcp_connection *conn = NULL;
@@ -155,5 +114,18 @@ tcp_stack tcp_init(void) {
     exit(1);
   }
 
-  return (tcp_stack){.connections = conns, .raw_socket = ip_sock_fd};
+  pthread_mutex_t socket_mutex;
+  pthread_mutex_init(&socket_mutex, NULL);
+  uint8_t *socket_send_buffer =
+      malloc(RAW_SOCKET_SEND_BUFFER_LEN * sizeof(uint8_t));
+
+  return (tcp_stack){
+      .connections = conns,
+      .raw_socket =
+          (tcp_raw_socket){
+              .fd = ip_sock_fd,
+              .mutex = socket_mutex,
+              .send_buffer = socket_send_buffer,
+          },
+  };
 }
