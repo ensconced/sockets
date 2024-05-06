@@ -17,7 +17,7 @@ CFLAGS=-Wall \
 
 BIN_DIR=bin
 
-SOURCES = $(shell echo ./*.c)
+SOURCES = $(shell echo src/*.c)
 
 $(BIN_DIR)/serve: $(SOURCES)
 	@mkdir -p $(BIN_DIR)

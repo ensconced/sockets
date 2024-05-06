@@ -21,12 +21,12 @@ int main(void) {
   // obtain a pointer to a new connection. NB the state of this connection gets
   // updated by another thread behind the scenes. Each connection will have
   // a mutex as a field on the struct.
-  connection* conn = open_passive_connection(&stack);
+  connection* conn = tcp_open_passive(&stack);
   // NB most of these methods will first need to obtain the connection
   // mutex, before checking the current state of the connection,
   // taking any actions, changing the state etc., and then releasing
   // the mutex again
-  tcp_send(&conn, /* */);
+  tcp_send(conn, /* */);
   // I guess this needs to be "callback style" - i.e. should take a function
   // pointer to be called with the results, instead of blocking.
   // How would you implement that though? I guess what it does internally
@@ -34,10 +34,10 @@ int main(void) {
   // to an array so that it can be called when the data is actually received?
   // So this means your function pointer will actually end up getting called
   // within a different thread...which I guess is fine.
-  tcp_receive(&conn, /* */, handle_data);
-  tcp_status(&conn, /* */);
-  tcp_close(&conn, /* */);
-  tcp_abort(&conn, /* */);
+  tcp_receive(conn, /* */, handle_data);
+  tcp_status(conn, /* */);
+  tcp_close(conn, /* */);
+  tcp_abort(conn, /* */);
 }
 ```
 
