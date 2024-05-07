@@ -27,7 +27,7 @@ uint16_t compute_checksum(uint32_t source_ip, uint32_t dest_ip, uint8_t *data,
   // The spec requires that we use 16 bit one's complement addition to compute
   // the checksum. An efficient way of acheiving the same result is by doing 32
   // bit addition (of the 16 bit chunks) and then at the end incorporating
-  // anything that "overflowed" out of the least bottom 16 bits back into the
+  // anything that "overflowed" out of the bottom 16 bits back into the
   // bottom 16 bits...
   uint32_t acc = 0;
 
