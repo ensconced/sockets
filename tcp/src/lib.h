@@ -33,13 +33,14 @@ typedef struct {
   tcp_connection_mode mode;
   tcp_socket local_socket;
   tcp_socket remote_socket;
+  uint32_t initial_send_seq_number;
 } tcp_connection;
 
 typedef struct {
   tcp_connection *buffer;
   size_t length;
   pthread_mutex_t mutex;
-} tcp_connections;
+} tcp_connection_pool;
 
 typedef struct {
   int fd;
@@ -48,7 +49,7 @@ typedef struct {
 } tcp_raw_socket;
 
 typedef struct {
-  tcp_connections connections;
+  tcp_connection_pool connection_pool;
   tcp_raw_socket raw_socket;
 } tcp_stack;
 

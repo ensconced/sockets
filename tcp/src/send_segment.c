@@ -23,7 +23,6 @@
 
 uint16_t compute_checksum(uint32_t source_ip, uint32_t dest_ip, uint8_t *data,
                           uint16_t data_len) {
-
   // The spec requires that we use 16 bit one's complement addition to compute
   // the checksum. An efficient way of acheiving the same result is by doing 32
   // bit addition (of the 16 bit chunks) and then at the end incorporating
@@ -54,7 +53,7 @@ uint16_t compute_checksum(uint32_t source_ip, uint32_t dest_ip, uint8_t *data,
   // Adding the first one of overflows may actually have created another
   // overflow. We can simply repeat the same operation to account for this:
   overflow = acc >> 16;
-  return (uint16_t)(acc + overflow);
+  return ~(uint16_t)(acc + overflow);
 }
 
 void tcp_send_segment(tcp_stack *stack, tcp_connection *conn, uint8_t *payload,
