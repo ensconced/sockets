@@ -9,12 +9,21 @@
 #include <time.h>
 
 #include "./lib.h"
+#include "./secret_key.h"
+#include "./utils.h"
 
 #define MAX_CONNECTIONS 256
 #define RAW_SOCKET_SEND_BUFFER_LEN 65536
 
-uint32_t get_initial_send_sequence_number(tcp_socket local_socket,
-                                          tcp_socket remote_socket) {
+// ISN_HASH_STRING_LEN is the sum of:
+// local ipv4 address:  4 bytes
+// local port:          2 bytes
+// remote ipv4 address: 4 bytes
+// remote port:         2 bytes
+// secret key:          16 bytes
+#define ISN_HASH_STRING_LEN = 28;
+
+uint32_t get_isn(tcp_socket local_socket, tcp_socket remote_socket) {
   struct timespec time;
   if (clock_gettime(CLOCK_MONOTONIC, &time) != 0) {
     fprintf(stderr, "Error reading clock: %s", strerror(errno));
@@ -22,8 +31,15 @@ uint32_t get_initial_send_sequence_number(tcp_socket local_socket,
   uint64_t microseconds = time.tv_sec * 1000 * 1000 + time.tv_nsec / 1000;
   uint32_t fours_of_microseconds = (uint32_t)(microseconds / 4);
 
-  // TODO - read spec for more details of how to compute it...
-  return hmac(fours_of_microseconds, local_socket, remote_socket, secret_key);
+  uint8_t hash_string[ISN_HASH_STRING_LEN] = {};
+  uint8_t *ptr = hash_string;
+  push_value(ptr, local_socket.ipv4_addr);
+  push_value(ptr, local_socket.port);
+  push_value(ptr, remote_socket.ipv4_addr);
+  push_value(ptr, remote_socket.port);
+  push_value(ptr, secret_key);
+
+  return fours_of_microseconds + md5(hash_string, ISN_HASH_STRING_LEN);
 }
 
 tcp_connection *tcp_open(tcp_stack *stack, tcp_socket local_socket,
@@ -48,8 +64,7 @@ tcp_connection *tcp_open(tcp_stack *stack, tcp_socket local_socket,
       // point (when we receive a SYN).
       if (mode == ACTIVE) {
         conn->remote_socket = remote_socket;
-        conn->initial_send_seq_number =
-            get_initial_send_sequence_number(local_socket, remote_socket);
+        conn->initial_send_seq_number = get_isn(local_socket, remote_socket);
       }
       break;
     }

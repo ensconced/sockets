@@ -4,6 +4,7 @@
 #include <sys/socket.h>
 
 #include "./lib.h"
+#include "./utils.h"
 
 // Flags
 #define CWR 128
@@ -14,12 +15,6 @@
 #define RST 4
 #define SYN 2
 #define FIN 1
-
-#define push_value(ptr, value)                                                 \
-  do {                                                                         \
-    memcpy(ptr, &value, sizeof(value));                                        \
-    ptr += sizeof(value);                                                      \
-  } while (0)
 
 uint16_t compute_checksum(uint32_t source_ip, uint32_t dest_ip, uint8_t *data,
                           uint16_t data_len) {
