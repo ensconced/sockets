@@ -15,14 +15,6 @@
 #define MAX_CONNECTIONS 256
 #define RAW_SOCKET_SEND_BUFFER_LEN 65536
 
-// ISN_HASH_STRING_LEN is the sum of:
-// local ipv4 address:  4 bytes
-// local port:          2 bytes
-// remote ipv4 address: 4 bytes
-// remote port:         2 bytes
-// secret key:          16 bytes
-#define ISN_HASH_STRING_LEN = 28;
-
 uint32_t get_isn(tcp_socket local_socket, tcp_socket remote_socket) {
   struct timespec time;
   if (clock_gettime(CLOCK_MONOTONIC, &time) != 0) {
@@ -31,15 +23,20 @@ uint32_t get_isn(tcp_socket local_socket, tcp_socket remote_socket) {
   uint64_t microseconds = time.tv_sec * 1000 * 1000 + time.tv_nsec / 1000;
   uint32_t fours_of_microseconds = (uint32_t)(microseconds / 4);
 
-  uint8_t hash_string[ISN_HASH_STRING_LEN] = {};
-  uint8_t *ptr = hash_string;
-  push_value(ptr, local_socket.ipv4_addr);
-  push_value(ptr, local_socket.port);
-  push_value(ptr, remote_socket.ipv4_addr);
-  push_value(ptr, remote_socket.port);
-  push_value(ptr, secret_key);
+  MD5_CTX hash_ctx;
+  unsigned char hash[16];
+  MD5Init(&hash_ctx);
+  MD5Update(&hash_ctx, local_socket.ipv4_addr, sizeof(local_socket));
+  MD5Update(&hash_ctx, local_socket.port, sizeof(local_socket));
+  MD5Update(&hash_ctx, remote_socket.ipv4_addr, sizeof(remote_socket));
+  MD5Update(&hash_ctx, remote_socket.port, sizeof(remote_socket));
+  MD5Update(&hash_ctx, secret_key, sizeof(secret_key));
+  MD5Final(hash, hash_ctx);
 
-  return fours_of_microseconds + md5(hash_string, ISN_HASH_STRING_LEN);
+  uint32_t bottom_32_bits_of_hash;
+  memcpy(*bottom_32_bits_of_hash, hash, sizeof(bottom_32_bits_of_hash));
+
+  return fours_of_microseconds + bottom_32_bits_of_hash;
 }
 
 tcp_connection *tcp_open(tcp_stack *stack, tcp_socket local_socket,
