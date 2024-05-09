@@ -1,5 +1,5 @@
 #include <errno.h>
-#include <md5.h>
+#include <openssl/md5.h>
 #include <netinet/ip.h>
 #include <pthread.h>
 #include <stdint.h>
@@ -7,10 +7,11 @@
 #include <stdlib.h>
 #include <sys/socket.h>
 #include <time.h>
+#include <string.h>
 
 #include "./lib.h"
-#include "./secret_key.h"
 #include "./utils.h"
+#include "./secret_key.h"
 
 #define MAX_CONNECTIONS 256
 #define RAW_SOCKET_SEND_BUFFER_LEN 65536
@@ -20,21 +21,21 @@ uint32_t get_isn(tcp_socket local_socket, tcp_socket remote_socket) {
   if (clock_gettime(CLOCK_MONOTONIC, &time) != 0) {
     fprintf(stderr, "Error reading clock: %s", strerror(errno));
   }
-  uint64_t microseconds = time.tv_sec * 1000 * 1000 + time.tv_nsec / 1000;
+  uint64_t microseconds = (uint64_t)time.tv_sec * 1000 * 1000 + (uint64_t)time.tv_nsec / 1000;
   uint32_t fours_of_microseconds = (uint32_t)(microseconds / 4);
 
   MD5_CTX hash_ctx;
   unsigned char hash[16];
-  MD5Init(&hash_ctx);
-  MD5Update(&hash_ctx, local_socket.ipv4_addr, sizeof(local_socket));
-  MD5Update(&hash_ctx, local_socket.port, sizeof(local_socket));
-  MD5Update(&hash_ctx, remote_socket.ipv4_addr, sizeof(remote_socket));
-  MD5Update(&hash_ctx, remote_socket.port, sizeof(remote_socket));
-  MD5Update(&hash_ctx, secret_key, sizeof(secret_key));
-  MD5Final(hash, hash_ctx);
+  MD5_Init(&hash_ctx);
+  MD5_Update(&hash_ctx, (uint8_t *)&local_socket.ipv4_addr, sizeof(local_socket));
+  MD5_Update(&hash_ctx, (uint8_t *)&local_socket.port, sizeof(local_socket));
+  MD5_Update(&hash_ctx, (uint8_t *)&remote_socket.ipv4_addr, sizeof(remote_socket));
+  MD5_Update(&hash_ctx, (uint8_t *)&remote_socket.port, sizeof(remote_socket));
+  MD5_Update(&hash_ctx, (uint8_t *)secret_key, secret_key_len * sizeof(unsigned char));
+  MD5_Final(hash, &hash_ctx);
 
   uint32_t bottom_32_bits_of_hash;
-  memcpy(*bottom_32_bits_of_hash, hash, sizeof(bottom_32_bits_of_hash));
+  memcpy(&bottom_32_bits_of_hash, hash, sizeof(bottom_32_bits_of_hash));
 
   return fours_of_microseconds + bottom_32_bits_of_hash;
 }
@@ -75,14 +76,15 @@ tcp_connection *tcp_open(tcp_stack *stack, tcp_socket local_socket,
   }
 
   if (mode == ACTIVE) {
-    tcp_send_segment(SYN);
+    // TODO
+    // tcp_send_segment(SYN);
   }
 
   pthread_mutex_unlock(&stack->connection_pool.mutex);
   return conn;
 }
 
-void tcp_send(tcp_connection *conn) {}
+// void tcp_send(tcp_connection *conn) {}
 
 tcp_stack tcp_init(void) {
   tcp_connection *connections_buffer =

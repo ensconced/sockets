@@ -13,6 +13,12 @@ CFLAGS=-Wall \
 	-std=c17 \
 	-fsanitize=address,undefined \
 	-g \
+	-D_POSIX_C_SOURCE=199309L \
+	-lssl \
+	-lcrypto \
 	-O1
 
 BIN_DIR=bin
+
+clean:
+	rm -r bin
