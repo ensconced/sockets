@@ -1,38 +1,49 @@
 #include <errno.h>
-#include <openssl/md5.h>
 #include <netinet/ip.h>
+#include <openssl/evp.h>
 #include <pthread.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <sys/socket.h>
 #include <time.h>
-#include <string.h>
 
 #include "./lib.h"
-#include "./utils.h"
 #include "./secret_key.h"
+#include "./tcp_stack.h"
+#include "./utils.h"
 
 #define MAX_CONNECTIONS 256
-#define RAW_SOCKET_SEND_BUFFER_LEN 65536
 
-uint32_t get_isn(tcp_socket local_socket, tcp_socket remote_socket) {
+uint32_t get_isn(tcp_stack *stack, tcp_socket local_socket,
+                 tcp_socket remote_socket) {
   struct timespec time;
   if (clock_gettime(CLOCK_MONOTONIC, &time) != 0) {
     fprintf(stderr, "Error reading clock: %s", strerror(errno));
   }
-  uint64_t microseconds = (uint64_t)time.tv_sec * 1000 * 1000 + (uint64_t)time.tv_nsec / 1000;
+  uint64_t microseconds =
+      (uint64_t)time.tv_sec * 1000 * 1000 + (uint64_t)time.tv_nsec / 1000;
   uint32_t fours_of_microseconds = (uint32_t)(microseconds / 4);
 
-  MD5_CTX hash_ctx;
+  EVP_MD_CTX *hash_ctx = EVP_MD_CTX_new();
+  EVP_DigestInit(hash_ctx, stack->md5_algorithm);
+
+  EVP_DigestUpdate(hash_ctx, (uint8_t *)&local_socket.ipv4_addr,
+                   sizeof(local_socket.ipv4_addr));
+  EVP_DigestUpdate(hash_ctx, (uint8_t *)&local_socket.port,
+                   sizeof(local_socket.port));
+  EVP_DigestUpdate(hash_ctx, (uint8_t *)&remote_socket.ipv4_addr,
+                   sizeof(remote_socket.ipv4_addr));
+  EVP_DigestUpdate(hash_ctx, (uint8_t *)&remote_socket.port,
+                   sizeof(remote_socket.port));
+  EVP_DigestUpdate(hash_ctx, (uint8_t *)secret_key,
+                   secret_key_len * sizeof(unsigned char));
+
   unsigned char hash[16];
-  MD5_Init(&hash_ctx);
-  MD5_Update(&hash_ctx, (uint8_t *)&local_socket.ipv4_addr, sizeof(local_socket));
-  MD5_Update(&hash_ctx, (uint8_t *)&local_socket.port, sizeof(local_socket));
-  MD5_Update(&hash_ctx, (uint8_t *)&remote_socket.ipv4_addr, sizeof(remote_socket));
-  MD5_Update(&hash_ctx, (uint8_t *)&remote_socket.port, sizeof(remote_socket));
-  MD5_Update(&hash_ctx, (uint8_t *)secret_key, secret_key_len * sizeof(unsigned char));
-  MD5_Final(hash, &hash_ctx);
+  EVP_DigestFinal(hash, hash_ctx, NULL);
+
+  EVP_MD_CTX_free(hash_ctx);
 
   uint32_t bottom_32_bits_of_hash;
   memcpy(&bottom_32_bits_of_hash, hash, sizeof(bottom_32_bits_of_hash));
@@ -62,7 +73,8 @@ tcp_connection *tcp_open(tcp_stack *stack, tcp_socket local_socket,
       // point (when we receive a SYN).
       if (mode == ACTIVE) {
         conn->remote_socket = remote_socket;
-        conn->initial_send_seq_number = get_isn(local_socket, remote_socket);
+        conn->initial_send_seq_number =
+            get_isn(stack, local_socket, remote_socket);
       }
       break;
     }
@@ -84,9 +96,7 @@ tcp_connection *tcp_open(tcp_stack *stack, tcp_socket local_socket,
   return conn;
 }
 
-// void tcp_send(tcp_connection *conn) {}
-
-tcp_stack tcp_init(void) {
+tcp_connection_pool tcp_connection_pool_create() {
   tcp_connection *connections_buffer =
       malloc(sizeof(tcp_connection) * MAX_CONNECTIONS);
   if (connections_buffer == 0) {
@@ -96,44 +106,13 @@ tcp_stack tcp_init(void) {
   for (int i = 0; i < MAX_CONNECTIONS; i++) {
     connections_buffer[i] = (tcp_connection){.mode = PASSIVE, .state = CLOSED};
   }
-
   pthread_mutex_t mutex;
   pthread_mutex_init(&mutex, NULL);
-  tcp_connection_pool conns = {
+  return (tcp_connection_pool){
       .buffer = connections_buffer, .length = 0, .mutex = mutex};
+}
 
-  // pthread_t incoming_datagram_handler_thread_id;
-  // if (pthread_create(&incoming_datagram_handler_thread_id, NULL,
-  //                    handle_incoming_datagrams, connections) != 0) {
-  //   fprintf(stderr, "Failed to create datagram handling thread\n");
-  //   exit(1);
-  // };
-
-  // pthread_t timeout_handler_thread_id;
-  // if (pthread_create(&timeout_handler_thread_id, NULL, handle_timeouts,
-  //                    connections) != 0) {
-  //   fprintf(stderr, "Failed to create timeout handling thread\n");
-  //   exit(1);
-  // };
-
-  int ip_sock_fd = socket(PF_INET, SOCK_RAW, IPPROTO_TCP);
-  if (ip_sock_fd == -1) {
-    fprintf(stderr, "Failed to create socket\n");
-    exit(1);
-  }
-
-  pthread_mutex_t socket_mutex;
-  pthread_mutex_init(&socket_mutex, NULL);
-  uint8_t *socket_send_buffer =
-      malloc(RAW_SOCKET_SEND_BUFFER_LEN * sizeof(uint8_t));
-
-  return (tcp_stack){
-      .connection_pool = conns,
-      .raw_socket =
-          (tcp_raw_socket){
-              .fd = ip_sock_fd,
-              .mutex = socket_mutex,
-              .send_buffer = socket_send_buffer,
-          },
-  };
+void tcp_connection_pool_destroy(tcp_connection_pool *connection_pool) {
+  free(connection_pool->buffer);
+  pthread_mutex_destroy(&connection_pool->mutex);
 }
