@@ -41,7 +41,7 @@ md5_result md5(EVP_MD *md5_algorithm, uint32_t local_ipv4_addr,
   };
 
   md5_result result = {0};
-  if (!EVP_DigestFinal(hash_ctx, &result.hash, NULL)) {
+  if (!EVP_DigestFinal(hash_ctx, (unsigned char *)&result.hash, NULL)) {
     fprintf(stderr, "Failed to finalise digest\n");
     exit(1);
   };

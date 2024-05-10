@@ -1,4 +1,5 @@
 #include "./tcp_stack.h"
+#include "./tcp_connection_pool.h"
 #include <netinet/in.h>
 #include <openssl/evp.h>
 #include <pthread.h>
@@ -7,7 +8,7 @@
 
 #define RAW_SOCKET_SEND_BUFFER_LEN 65536
 
-tcp_stack tcp_stack_create(void) {
+tcp_stack *tcp_stack_create(void) {
   // pthread_t incoming_datagram_handler_thread_id;
   // if (pthread_create(&incoming_datagram_handler_thread_id, NULL,
   //                    handle_incoming_datagrams, connections) != 0) {
@@ -39,7 +40,8 @@ tcp_stack tcp_stack_create(void) {
     exit(1);
   }
 
-  return (tcp_stack){
+  tcp_stack *stack = malloc(sizeof(tcp_stack));
+  *stack = (tcp_stack){
       .connection_pool = tcp_connection_pool_create(),
       .raw_socket =
           (tcp_raw_socket){
@@ -49,6 +51,7 @@ tcp_stack tcp_stack_create(void) {
           },
       .md5_algorithm = md5_algorithm,
   };
+  return stack;
 }
 
 void tcp_stack_destroy(tcp_stack *stack) {
@@ -58,4 +61,5 @@ void tcp_stack_destroy(tcp_stack *stack) {
   // free socket send buffer
   // free md5_algorithm
   // clean up threads...
+  free(stack);
 }

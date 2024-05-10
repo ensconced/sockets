@@ -1,8 +1,9 @@
 include ../common.mk
 
 # TODO - do I need to use sort/uniq here to avoid pulling in secret_key twice?
-SOURCES = $(shell find . -name '*.c' ! -name '*.test.c') src/isn_generation/secret_key.c
-TEST_SOURCES = $(shell find . -name '*.test.c')
+SOURCE_FILES = $(shell find . -name '*.c' ! -name '*.test.c' ! -name main.c) src/isn_generation/secret_key.c
+TEST_FILES = $(shell find . -name '*.test.c')
+MAIN_FILE = src/main.c
 
 src/isn_generation/secret_key.c:
 	head -c 16 /dev/random > /tmp/rand
@@ -12,10 +13,10 @@ src/isn_generation/secret_key.c:
 $(BIN_DIR):
 	mkdir -p $(BIN_DIR)
 
-$(BIN_DIR)/serve: $(SOURCES) | $(BIN_DIR)
+$(BIN_DIR)/serve: $(SOURCE_FILES) $(MAIN_FILE) | $(BIN_DIR)
 	$(CC) $(CFLAGS) -o $@ $^
 
-$(BIN_DIR)/test: $(SOURCES) $(TEST_SOURCES) | $(BIN_DIR)
+$(BIN_DIR)/test: $(SOURCE_FILES) $(TEST_FILES) | $(BIN_DIR)
 	$(CC) $(CFLAGS) -o $@ $^
 
 test: $(BIN_DIR)/test

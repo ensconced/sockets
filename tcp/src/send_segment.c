@@ -3,6 +3,7 @@
 #include <string.h>
 #include <sys/socket.h>
 
+#include "./tcp_connection.h"
 #include "./tcp_stack.h"
 #include "./utils.h"
 
@@ -39,6 +40,7 @@ uint16_t compute_checksum(uint32_t source_ip, uint32_t dest_ip, uint8_t *data,
   for (size_t i = 0; i < data_len; i += 2) {
     uint8_t msb = data[i];
     uint8_t lsb = i + 1 == data_len ? 0 : data[i + 1];
+    // TODO - this looks wrong - like...I'm shifting too far?
     acc += (msb << 8) & lsb;
   }
 

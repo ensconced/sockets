@@ -7,11 +7,11 @@
 #include <string.h>
 #include <sys/socket.h>
 
+#include "./constants.h"
+#include "./isn_generation/generate_isn.h"
 #include "./lib.h"
 #include "./tcp_stack.h"
 #include "./utils.h"
-
-#define MAX_CONNECTIONS 256
 
 tcp_connection *tcp_open(tcp_stack *stack, tcp_socket local_socket,
                          tcp_socket remote_socket, tcp_connection_mode mode) {
@@ -56,25 +56,4 @@ tcp_connection *tcp_open(tcp_stack *stack, tcp_socket local_socket,
 
   pthread_mutex_unlock(&stack->connection_pool.mutex);
   return conn;
-}
-
-tcp_connection_pool tcp_connection_pool_create() {
-  tcp_connection *connections_buffer =
-      malloc(sizeof(tcp_connection) * MAX_CONNECTIONS);
-  if (connections_buffer == 0) {
-    fprintf(stderr, "Failed to malloc connections buffer\n");
-    exit(1);
-  }
-  for (int i = 0; i < MAX_CONNECTIONS; i++) {
-    connections_buffer[i] = (tcp_connection){.mode = PASSIVE, .state = CLOSED};
-  }
-  pthread_mutex_t mutex;
-  pthread_mutex_init(&mutex, NULL);
-  return (tcp_connection_pool){
-      .buffer = connections_buffer, .length = 0, .mutex = mutex};
-}
-
-void tcp_connection_pool_destroy(tcp_connection_pool *connection_pool) {
-  free(connection_pool->buffer);
-  pthread_mutex_destroy(&connection_pool->mutex);
 }
