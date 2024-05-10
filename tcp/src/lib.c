@@ -1,55 +1,17 @@
 #include <errno.h>
 #include <netinet/ip.h>
-#include <openssl/evp.h>
 #include <pthread.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/socket.h>
-#include <time.h>
 
 #include "./lib.h"
-#include "./secret_key.h"
 #include "./tcp_stack.h"
 #include "./utils.h"
 
 #define MAX_CONNECTIONS 256
-
-uint32_t get_isn(tcp_stack *stack, tcp_socket local_socket,
-                 tcp_socket remote_socket) {
-  struct timespec time;
-  if (clock_gettime(CLOCK_MONOTONIC, &time) != 0) {
-    fprintf(stderr, "Error reading clock: %s", strerror(errno));
-  }
-  uint64_t microseconds =
-      (uint64_t)time.tv_sec * 1000 * 1000 + (uint64_t)time.tv_nsec / 1000;
-  uint32_t fours_of_microseconds = (uint32_t)(microseconds / 4);
-
-  EVP_MD_CTX *hash_ctx = EVP_MD_CTX_new();
-  EVP_DigestInit(hash_ctx, stack->md5_algorithm);
-
-  EVP_DigestUpdate(hash_ctx, (uint8_t *)&local_socket.ipv4_addr,
-                   sizeof(local_socket.ipv4_addr));
-  EVP_DigestUpdate(hash_ctx, (uint8_t *)&local_socket.port,
-                   sizeof(local_socket.port));
-  EVP_DigestUpdate(hash_ctx, (uint8_t *)&remote_socket.ipv4_addr,
-                   sizeof(remote_socket.ipv4_addr));
-  EVP_DigestUpdate(hash_ctx, (uint8_t *)&remote_socket.port,
-                   sizeof(remote_socket.port));
-  EVP_DigestUpdate(hash_ctx, (uint8_t *)secret_key,
-                   secret_key_len * sizeof(unsigned char));
-
-  unsigned char hash[16];
-  EVP_DigestFinal(hash, hash_ctx, NULL);
-
-  EVP_MD_CTX_free(hash_ctx);
-
-  uint32_t bottom_32_bits_of_hash;
-  memcpy(&bottom_32_bits_of_hash, hash, sizeof(bottom_32_bits_of_hash));
-
-  return fours_of_microseconds + bottom_32_bits_of_hash;
-}
 
 tcp_connection *tcp_open(tcp_stack *stack, tcp_socket local_socket,
                          tcp_socket remote_socket, tcp_connection_mode mode) {
@@ -74,7 +36,7 @@ tcp_connection *tcp_open(tcp_stack *stack, tcp_socket local_socket,
       if (mode == ACTIVE) {
         conn->remote_socket = remote_socket;
         conn->initial_send_seq_number =
-            get_isn(stack, local_socket, remote_socket);
+            generate_isn(stack, local_socket, remote_socket);
       }
       break;
     }

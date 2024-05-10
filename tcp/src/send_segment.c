@@ -3,7 +3,7 @@
 #include <string.h>
 #include <sys/socket.h>
 
-#include "./lib.h"
+#include "./tcp_stack.h"
 #include "./utils.h"
 
 // Flags
