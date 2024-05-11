@@ -3,6 +3,7 @@
 #include "../lib.h"
 #include "../tcp_stack.h"
 #include "./md5.h"
+#include "./secret_key.h"
 #include <errno.h>
 #include <stdint.h>
 #include <string.h>
@@ -18,9 +19,9 @@ uint32_t generate_isn(tcp_stack *stack, tcp_socket local_socket,
       (uint64_t)time.tv_sec * 1000 * 1000 + (uint64_t)time.tv_nsec / 1000;
   uint32_t fours_of_microseconds = (uint32_t)(microseconds / 4);
 
-  md5_result hash_result =
-      md5(stack->md5_algorithm, local_socket.ipv4_addr, local_socket.port,
-          remote_socket.ipv4_addr, remote_socket.port);
+  md5_result hash_result = md5(stack->md5_algorithm, local_socket.ipv4_addr,
+                               local_socket.port, remote_socket.ipv4_addr,
+                               remote_socket.port, secret_key, secret_key_len);
 
   uint32_t bottom_32_bits_of_hash;
   memcpy(&bottom_32_bits_of_hash, hash_result.hash,

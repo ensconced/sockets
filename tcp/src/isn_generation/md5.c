@@ -1,11 +1,11 @@
 #include "./md5.h"
-#include "./secret_key.h"
 #include <openssl/evp.h>
 #include <stdint.h>
 
 md5_result md5(EVP_MD *md5_algorithm, uint32_t local_ipv4_addr,
                uint16_t local_port, uint32_t remote_ipv4_addr,
-               uint16_t remote_port) {
+               uint16_t remote_port, uint8_t *secret_key,
+               uint32_t secret_key_len) {
   EVP_MD_CTX *hash_ctx = EVP_MD_CTX_new();
   if (hash_ctx == NULL) {
     fprintf(stderr, "Failed to create hash ctx\n");
