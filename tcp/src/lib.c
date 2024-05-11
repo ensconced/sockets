@@ -57,3 +57,16 @@ tcp_connection *tcp_open(tcp_stack *stack, tcp_socket local_socket,
   pthread_mutex_unlock(&stack->connection_pool.mutex);
   return conn;
 }
+
+tcp_connection *tcp_open_passive(tcp_stack *stack, tcp_socket local_socket) {
+  return tcp_open(stack, local_socket, (tcp_socket){0}, PASSIVE);
+}
+
+tcp_connection *tcp_open_active(tcp_stack *stack, tcp_socket local_socket,
+                                tcp_socket remote_socket) {
+  return tcp_open(stack, local_socket, remote_socket, ACTIVE);
+}
+
+void tcp_send(tcp_connection *conn, void *data, uint32_t data_size) {
+  // TODO
+}

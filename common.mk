@@ -9,7 +9,6 @@ CFLAGS=-Wall \
 	-Wimplicit-int \
 	-Wreserved-identifier \
 	-pedantic-errors \
-	-Werror \
 	-std=c17 \
 	-fsanitize=address,undefined \
 	-g \

@@ -23,9 +23,7 @@ uint32_t generate_isn(tcp_stack *stack, tcp_socket local_socket,
                                local_socket.port, remote_socket.ipv4_addr,
                                remote_socket.port, secret_key, secret_key_len);
 
-  uint32_t bottom_32_bits_of_hash;
-  memcpy(&bottom_32_bits_of_hash, hash_result.hash,
-         sizeof(bottom_32_bits_of_hash));
-
-  return fours_of_microseconds + bottom_32_bits_of_hash;
+  uint32_t truncated_hash;
+  memcpy(&truncated_hash, hash_result.hash, sizeof(truncated_hash));
+  return fours_of_microseconds + truncated_hash;
 }
