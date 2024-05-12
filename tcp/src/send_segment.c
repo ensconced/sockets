@@ -55,7 +55,7 @@ uint16_t compute_checksum(uint32_t source_ip, uint32_t dest_ip, uint8_t *data,
 
 void tcp_send_segment(tcp_stack *stack, tcp_connection *conn, uint8_t *payload,
                       size_t payload_len, uint16_t max_segment_size) {
-  pthread_mutex_lock(&stack->raw_socket.mutex);
+  pthread_mutex_lock(stack->raw_socket.mutex);
 
   uint8_t *data = stack->raw_socket.send_buffer;
   uint8_t *ptr = data;
@@ -123,5 +123,5 @@ void tcp_send_segment(tcp_stack *stack, tcp_connection *conn, uint8_t *payload,
   };
   sendto(stack->raw_socket.fd, data, data_len, 0,
          (struct sockaddr *)(&dest_addr), sizeof(dest_addr));
-  pthread_mutex_unlock(&stack->raw_socket.mutex);
+  pthread_mutex_unlock(stack->raw_socket.mutex);
 }

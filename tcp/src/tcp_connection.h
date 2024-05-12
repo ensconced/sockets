@@ -33,4 +33,6 @@ typedef struct tcp_connection_id {
   size_t buffer_len;
 } tcp_connection_id;
 
-tcp_connection_id tcp_connection_get_id(tcp_connection *conn);
+tcp_connection_id tcp_connection_id_create(tcp_socket local_socket,
+                                           tcp_socket remote_socket);
+void tcp_connection_id_destroy(tcp_connection_id connection_id);

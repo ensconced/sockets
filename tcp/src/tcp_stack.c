@@ -18,8 +18,8 @@ tcp_raw_socket tcp_raw_socket_create(void) {
     exit(1);
   }
 
-  pthread_mutex_t socket_mutex;
-  pthread_mutex_init(&socket_mutex, NULL);
+  pthread_mutex_t *socket_mutex = malloc(sizeof(pthread_mutex_t));
+  pthread_mutex_init(socket_mutex, NULL);
   uint8_t *socket_send_buffer =
       malloc(RAW_SOCKET_SEND_BUFFER_LEN * sizeof(uint8_t));
 
@@ -35,7 +35,8 @@ void tcp_raw_socket_destroy(tcp_raw_socket *raw_socket) {
     fprintf(stderr, "Failed to close raw socket: %s\n", strerror(errno));
   }
   free(raw_socket->send_buffer);
-  pthread_mutex_destroy(&raw_socket->mutex);
+  pthread_mutex_destroy(raw_socket->mutex);
+  free(raw_socket->mutex);
 }
 
 tcp_stack *tcp_stack_create(void) {
@@ -72,6 +73,8 @@ void tcp_stack_destroy(tcp_stack *stack) {
   // TODO - should also clean up / join pthreads...
   EVP_MD_free(stack->md5_algorithm);
   tcp_raw_socket_destroy(&stack->raw_socket);
+  pthread_mutex_lock(stack->connection_pool.mutex);
+
   tcp_connection_pool_destroy(&stack->connection_pool);
   free(stack);
 }

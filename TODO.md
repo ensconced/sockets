@@ -1,5 +1,11 @@
 # TODO
 
+- add iterator to hashmap
+- use hashmap iterators in tcp_connection_pool_destroy to close/free all connections, instead of having to do this in main.c
+
+
+
+
 TODOs in send_segment:
 
 seq_number

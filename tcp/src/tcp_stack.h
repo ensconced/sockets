@@ -8,7 +8,7 @@
 typedef struct tcp_raw_socket {
   int fd;
   uint8_t *send_buffer;
-  pthread_mutex_t mutex;
+  pthread_mutex_t *mutex;
 } tcp_raw_socket;
 
 typedef struct tcp_stack {

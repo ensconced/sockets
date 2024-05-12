@@ -41,29 +41,15 @@ tcp_connection *tcp_open(tcp_stack *stack, tcp_socket local_socket,
   // for this user, if not, return "error: Diffserv value not allowed" or
   // "error: security/compartment not allowed""
 
-  pthread_mutex_lock(&stack->connection_pool.mutex);
-  tcp_connection_id connection_id = tcp_connection_get_id(conn);
-  hash_map *hash_map_to_add_to =
-      mode == PASSIVE ? stack->connection_pool.connections_in_listen_state
-                      : stack->connection_pool.connections_not_in_listen_state;
-
-  // TODO - could optimise this with a `hash_map_insert_if_not_already_present`
-  // function.
-  tcp_connection *existing_connection = hash_map_get(
-      hash_map_to_add_to, connection_id.buffer, connection_id.buffer_len);
-  if (existing_connection != NULL) {
-    fprintf(stderr, "Connection already exists\n");
-    exit(1);
-  }
-  hash_map_insert(hash_map_to_add_to, connection_id.buffer,
-                  connection_id.buffer_len, conn);
+  pthread_mutex_lock(stack->connection_pool.mutex);
+  tcp_connection_pool_add(stack->connection_pool, conn);
 
   if (mode == ACTIVE) {
     // TODO
     // tcp_send_segment(SYN);
   }
 
-  pthread_mutex_unlock(&stack->connection_pool.mutex);
+  pthread_mutex_unlock(stack->connection_pool.mutex);
   return conn;
 }
 
