@@ -18,8 +18,9 @@ tcp_connection *tcp_open(tcp_stack *stack, tcp_socket local_socket,
   // TODO - I think we also need to check whether there is already a connection
   // using the same local & remote sockets - because you shouldn't be able to
   // open a new one using the same pair?
-  tcp_connection *conn = NULL;
+
   pthread_mutex_lock(&stack->connection_pool.mutex);
+  tcp_connection *conn = NULL;
   for (int i = 0; i < MAX_CONNECTIONS; i++) {
     conn = &stack->connection_pool.buffer[i];
     if (conn->state == CLOSED) {
