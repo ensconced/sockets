@@ -128,11 +128,6 @@ void hash_map_rehash_if_necessary(hash_map *hm) {
   }
 }
 
-void hash_map_insert(hash_map *hm, void *key, size_t key_len, void *value) {
-  hash_map_rehash_if_necessary(hm);
-  hash_map_insert_key_value(hm, key, key_len, value);
-}
-
 buffer_entry *hash_map_find_entry(hash_map *hm, void *key, size_t key_len) {
   uint32_t idx = fnv1a_hash(key, key_len) % hm->buffer_len;
   while (true) {
@@ -146,6 +141,11 @@ buffer_entry *hash_map_find_entry(hash_map *hm, void *key, size_t key_len) {
     }
     idx = (idx + 1) % hm->buffer_len;
   }
+}
+
+void hash_map_insert(hash_map *hm, void *key, size_t key_len, void *value) {
+  hash_map_rehash_if_necessary(hm);
+  hash_map_insert_key_value(hm, key, key_len, value);
 }
 
 void *hash_map_get(hash_map *hm, void *key, size_t key_len) {

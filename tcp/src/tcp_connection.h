@@ -1,6 +1,7 @@
 #pragma once
 
 #include "./tcp_socket.h"
+#include <stddef.h>
 #include <stdint.h>
 
 typedef enum tcp_conection_mode { PASSIVE, ACTIVE } tcp_connection_mode;
@@ -26,3 +27,10 @@ typedef struct tcp_connection {
   tcp_socket remote_socket;
   uint32_t initial_send_seq_number;
 } tcp_connection;
+
+typedef struct tcp_connection_id {
+  uint8_t *buffer;
+  size_t buffer_len;
+} tcp_connection_id;
+
+tcp_connection_id tcp_connection_get_id(tcp_connection *conn);

@@ -1,12 +1,13 @@
 #pragma once
 
+#include "./hash_map/hash_map.h"
 #include "./tcp_connection.h"
 #include <pthread.h>
 #include <stdint.h>
 
 typedef struct tcp_connection_pool {
-  tcp_connection *buffer;
-  uint32_t length;
+  hash_map *connections_in_listen_state;
+  hash_map *connections_not_in_listen_state;
   pthread_mutex_t mutex;
 } tcp_connection_pool;
 
