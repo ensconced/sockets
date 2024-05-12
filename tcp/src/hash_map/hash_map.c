@@ -96,7 +96,6 @@ void hash_map_rehash(hash_map *hm, uint32_t new_buffer_len) {
     if (entry.type == occupied) {
       hash_map_insert_key_value(&new_hash_map, entry.key, entry.key_len,
                                 entry.value);
-      hm->occupied_count++;
     }
   }
 
@@ -130,6 +129,8 @@ void hash_map_rehash_if_necessary(hash_map *hm) {
 
 buffer_entry *hash_map_find_entry(hash_map *hm, void *key, size_t key_len) {
   uint32_t idx = fnv1a_hash(key, key_len) % hm->buffer_len;
+  // The enforcement of the max load factor means that there are always some
+  // empty entries and therefore this loop will always terminate.
   while (true) {
     buffer_entry *entry = &hm->buffer[idx];
     if (entry->type == empty) {
