@@ -31,6 +31,11 @@ typedef struct hash_map {
   uint32_t tombstone_count;
 } hash_map;
 
+typedef struct hash_map_iterator {
+  hash_map *hm;
+  size_t idx;
+} hash_map_iterator;
+
 uint32_t fnv1a_hash(void *data, size_t data_len) {
   uint32_t hash = FNV_OFFSET_BASIS;
   for (size_t i = 0; i < data_len; i++) {
@@ -163,4 +168,29 @@ void hash_map_delete(hash_map *hm, void *key, size_t key_len) {
     return;
   }
   entry->type = tombstone;
+}
+
+void *hash_map_iterator_next(hash_map_iterator *iterator) {
+  do {
+    iterator->idx++;
+  } while (iterator->hm->buffer[iterator->idx].type != occupied &&
+           iterator->idx < iterator->hm->buffer_len);
+}
+
+bool hash_map_iterator_done(hash_map_iterator *iterator) {
+  return iterator->idx >= iterator->hm->buffer_len;
+}
+
+void *hash_map_iterator_current(hash_map_iterator *iterator) {
+  if (iterator->idx >= iterator->hm->buffer_len) {
+    return NULL;
+  }
+  return iterator->hm->buffer[iterator->idx].value;
+}
+
+hash_map_iterator *hash_map_iterator_create(hash_map *hm) {
+  return (hash_map_iterator){
+      .hm = hm,
+      .idx = 0,
+  };
 }
