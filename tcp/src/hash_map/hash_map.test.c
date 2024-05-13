@@ -66,7 +66,35 @@ void hash_map_test_high_load(void) {
   hash_map_destroy(hm);
 }
 
+void hash_map_test_iteration(void) {
+  hash_map *hm = hash_map_create();
+  size_t count = 1000;
+  uint32_t *keys = malloc(count * sizeof(uint32_t));
+  uint32_t *values = malloc(count * sizeof(uint32_t));
+  for (uint32_t i = 0; i < count; i++) {
+    keys[i] = i;
+    values[i] = i * 2;
+    hash_map_insert(hm, &keys[i], sizeof(uint32_t), &values[i]);
+  }
+
+  uint32_t *iterator_values = malloc(count * sizeof(uint32_t));
+  hash_map_iterator *iterator = hash_map_iterator_create(hm);
+
+  uint32_t *val;
+  while ((val = hash_map_iterator_take(iterator)) != NULL) {
+    iterator_values[*val / 2] = *val;
+  }
+  assert(memcmp(values, iterator_values, count * sizeof(uint32_t)) == 0);
+
+  free(keys);
+  free(values);
+  free(iterator_values);
+  hash_map_iterator_destroy(iterator);
+  hash_map_destroy(hm);
+}
+
 void hash_map_test(void) {
   hash_map_test_basic_functionality();
   hash_map_test_high_load();
+  hash_map_test_iteration();
 }

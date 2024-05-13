@@ -10,5 +10,4 @@ int main(void) {
   char *data = "hello there";
   tcp_send(conn, data, (uint32_t)strlen(data));
   tcp_stack_destroy(stack);
-  free(conn);
 }

@@ -170,27 +170,27 @@ void hash_map_delete(hash_map *hm, void *key, size_t key_len) {
   entry->type = tombstone;
 }
 
-void *hash_map_iterator_next(hash_map_iterator *iterator) {
-  do {
+void *hash_map_iterator_take(hash_map_iterator *iterator) {
+  while (iterator->idx < iterator->hm->buffer_len &&
+         iterator->hm->buffer[iterator->idx].type != occupied) {
     iterator->idx++;
-  } while (iterator->hm->buffer[iterator->idx].type != occupied &&
-           iterator->idx < iterator->hm->buffer_len);
-}
-
-bool hash_map_iterator_done(hash_map_iterator *iterator) {
-  return iterator->idx >= iterator->hm->buffer_len;
-}
-
-void *hash_map_iterator_current(hash_map_iterator *iterator) {
-  if (iterator->idx >= iterator->hm->buffer_len) {
-    return NULL;
   }
-  return iterator->hm->buffer[iterator->idx].value;
+  return iterator->idx == iterator->hm->buffer_len
+             ? NULL
+             : iterator->hm->buffer[iterator->idx++].value;
 }
 
 hash_map_iterator *hash_map_iterator_create(hash_map *hm) {
-  return (hash_map_iterator){
+  hash_map_iterator *iter = malloc(sizeof(hash_map_iterator));
+  if (iter == NULL) {
+    fprintf(stderr, "Failed to malloc iterator\n");
+    exit(1);
+  }
+  *iter = (hash_map_iterator){
       .hm = hm,
       .idx = 0,
   };
+  return iter;
 }
+
+void hash_map_iterator_destroy(hash_map_iterator *iter) { free(iter); }

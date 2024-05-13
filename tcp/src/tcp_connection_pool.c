@@ -37,32 +37,32 @@ void tcp_connection_pool_add(tcp_connection_pool connection_pool,
   tcp_connection_id_destroy(connection_id);
 }
 
-void tcp_connection_pool_close_all_connections(
+void tcp_connection_pool_free_all_connections(
     tcp_connection_pool *connection_pool) {
-  for (hash_map_iterator *listen_state_iter = hash_map_iterator_create(
-           connection_pool->connections_in_listen_state);
-       !hash_map_iterator_done(listen_state_iter);
-       hash_map_iterator_next(listen_state_iter)) {
-    tcp_connection *conn = hash_map_iterator_current(listen_state_iter);
+  hash_map_iterator *listen_state_iter =
+      hash_map_iterator_create(connection_pool->connections_in_listen_state);
+  hash_map_iterator *not_listen_state_iter = hash_map_iterator_create(
+      connection_pool->connections_not_in_listen_state);
 
-    tcp_connection_close(conn); // TODO - implement this...
+  tcp_connection *conn;
+  while ((conn = hash_map_iterator_take(listen_state_iter)) != NULL) {
+    free(conn);
   }
-  for (hash_map_iterator *not_listen_state_iter = hash_map_iterator_create(
-           connection_pool->connections_not_in_listen_state);
-       !hash_map_iterator_done(not_listen_state_iter);
-       hash_map_iterator_next(not_listen_state_iter)) {
-    tcp_connection *conn = hash_map_iterator_current(not_listen_state_iter);
-    tcp_connection_close(conn);
+  while ((conn = hash_map_iterator_take(not_listen_state_iter)) != NULL) {
+    free(conn);
   }
+  hash_map_iterator_destroy(listen_state_iter);
+  hash_map_iterator_destroy(not_listen_state_iter);
 }
 
 void tcp_connection_pool_destroy(tcp_connection_pool *connection_pool) {
-
   // TODO
   // - set atomic flag telling other threads to stop
   // - join other thread
   // - destroy mutex
-  tcp_connection_pool_close_all_connections(connection_pool);
+
+  // TODO - we may want to actually CLOSE all the connections?
+  tcp_connection_pool_free_all_connections(connection_pool);
   hash_map_destroy(connection_pool->connections_in_listen_state);
   hash_map_destroy(connection_pool->connections_not_in_listen_state);
   pthread_mutex_destroy(connection_pool->mutex);
