@@ -6,6 +6,7 @@
 #include <string.h>
 #include <sys/socket.h>
 #include <sys/types.h>
+#include <unistd.h>
 
 #define MAX_RESPONSE_SIZE 1024
 
@@ -40,18 +41,18 @@ int main(void) {
 
   int socket_fd = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
   if (socket_fd == -1) {
-    fprintf(stderr, "Failed to create socket. %s", strerror(errno));
+    fprintf(stderr, "Failed to create socket. %s\n", strerror(errno));
     exit(1);
   }
 
   struct in_addr bind_addr;
   int addr_err = inet_pton(AF_INET, BIND_ADDR_STR, &bind_addr);
   if (addr_err == 0) {
-    fprintf(stderr, "Failed to parse bind address.");
+    fprintf(stderr, "Failed to parse bind address.\n");
     exit(1);
   }
   if (addr_err == -1) {
-    fprintf(stderr, "System error while parsing bind address. %s",
+    fprintf(stderr, "System error while parsing bind address. %s\n",
             strerror(errno));
     exit(1);
   }
@@ -64,13 +65,13 @@ int main(void) {
 
   int bind_err = bind(socket_fd, (struct sockaddr *)(&addr), sizeof(addr));
   if (bind_err) {
-    fprintf(stderr, "Failed to bind socket. %s", strerror(errno));
+    fprintf(stderr, "Failed to bind socket. %s\n", strerror(errno));
     exit(1);
   }
 
   int listen_err = listen(socket_fd, SOMAXCONN);
   if (listen_err) {
-    fprintf(stderr, "Failed to listen on socket. %s", strerror(errno));
+    fprintf(stderr, "Failed to listen on socket. %s\n", strerror(errno));
     exit(1);
   }
 
@@ -79,7 +80,7 @@ int main(void) {
     socklen_t remote_addr_len = sizeof(remote_addr);
     int acc_sock_fd = accept(socket_fd, &remote_addr, &remote_addr_len);
     if (acc_sock_fd == -1) {
-      fprintf(stderr, "Failed to accept connection. %s", strerror(errno));
+      fprintf(stderr, "Failed to accept connection. %s\n", strerror(errno));
       continue;
     }
 
@@ -92,6 +93,11 @@ int main(void) {
     // would never get a response.
     // Anyway, I should probably wait until I have a full request until I send
     // the response.
-    send(acc_sock_fd, response, strlen(response), 0);
+    if (send(acc_sock_fd, response, strlen(response), 0) == -1) {
+      fprintf(stderr, "Failed to send response: %s\n", strerror(errno));
+    }
+    if (close(acc_sock_fd) == -1) {
+      fprintf(stderr, "Failed to close socket: %s\n", strerror(errno));
+    }
   }
 }
