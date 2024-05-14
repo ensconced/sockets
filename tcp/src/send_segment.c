@@ -7,15 +7,11 @@
 #include "./tcp_stack.h"
 #include "./utils.h"
 
-// Flags
-#define CWR 128
-#define ECE 64
-#define URG 32
-#define ACK 16
-#define PSH 8
-#define RST 4
-#define SYN 2
-#define FIN 1
+// TODO - check how I'm meant to decide this value
+#define MAX_SEGMENT_SIZE 4096
+// TODO - I think this should be based on the size of my recieve buffer...but
+// this will do for now
+#define WINDOW 1024
 
 uint16_t compute_checksum(uint32_t source_ip, uint32_t dest_ip, uint8_t *data,
                           uint16_t data_len) {
@@ -40,8 +36,7 @@ uint16_t compute_checksum(uint32_t source_ip, uint32_t dest_ip, uint8_t *data,
   for (size_t i = 0; i < data_len; i += 2) {
     uint8_t msb = data[i];
     uint8_t lsb = i + 1 == data_len ? 0 : data[i + 1];
-    // TODO - this looks wrong - like...I'm shifting too far?
-    acc += (msb << 8) & lsb;
+    acc += ((uint32_t)msb << 8) & (uint32_t)lsb;
   }
 
   // Now incorporate any overflows back into the lower 16 bits.
@@ -54,7 +49,8 @@ uint16_t compute_checksum(uint32_t source_ip, uint32_t dest_ip, uint8_t *data,
 }
 
 void tcp_send_segment(tcp_stack *stack, tcp_connection *conn, uint8_t *payload,
-                      size_t payload_len, uint16_t max_segment_size) {
+                      size_t payload_len, uint8_t flags, uint32_t seq_number,
+                      uint32_t ack_number) {
   pthread_mutex_lock(stack->raw_socket.mutex);
 
   uint8_t *data = stack->raw_socket.send_buffer;
@@ -62,15 +58,14 @@ void tcp_send_segment(tcp_stack *stack, tcp_connection *conn, uint8_t *payload,
 
   uint16_t source_port = htons(conn->local_socket.port);
   uint16_t dest_port = htons(conn->remote_socket.port);
-  uint32_t seq_number = htonl(1234); // TODO!
-  uint32_t ack_number = htonl(1234); // TODO!
-  uint8_t flags = SYN & ACK;         // TODO!
-  uint16_t window = htons(1234);     // TODO!
+  uint32_t seq = htonl(seq_number);
+  uint32_t ack = htonl(ack_number);
+  uint16_t window = htons(WINDOW);
   uint16_t initial_checksum = 0;
-  uint16_t urgent_pointer = htons(1234); // TODO!
+  uint16_t urgent_pointer = htons(0); // TODO
   uint8_t max_segment_size_option_kind = 2;
   uint8_t max_segment_size_option_length = 4;
-  uint16_t max_segment_size_value = htons(max_segment_size);
+  uint16_t max_segment_size_value = htons(MAX_SEGMENT_SIZE);
   uint8_t end_of_option_list = 0;
   uint8_t no_op_option = 1;
 
@@ -80,8 +75,8 @@ void tcp_send_segment(tcp_stack *stack, tcp_connection *conn, uint8_t *payload,
 
   push_value(ptr, source_port);
   push_value(ptr, dest_port);
-  push_value(ptr, seq_number);
-  push_value(ptr, ack_number);
+  push_value(ptr, seq);
+  push_value(ptr, ack);
 
   // grab a pointer to the data offset so we can overwrite it later...
   uint8_t *data_offset_ptr = ptr;
@@ -95,10 +90,9 @@ void tcp_send_segment(tcp_stack *stack, tcp_connection *conn, uint8_t *payload,
   push_value(ptr, max_segment_size_option_kind);
   push_value(ptr, max_segment_size_option_length);
   push_value(ptr, max_segment_size_value);
-  push_value(ptr, end_of_option_list);
   // pad out options until they reach a 32bit word boundary
   while ((ptr - data) % 4) {
-    push_value(ptr, no_op_option);
+    push_value(ptr, end_of_option_list);
   }
   // ...now that we know where the payload is going, we can insert the correct
   // value for the data_offset.
@@ -107,7 +101,9 @@ void tcp_send_segment(tcp_stack *stack, tcp_connection *conn, uint8_t *payload,
   *data_offset_ptr = (uint8_t)(data_word_offset << 4);
 
   // append the actual data
-  memcpy(ptr, payload, payload_len);
+  if (payload_len > 0) {
+    memcpy(ptr, payload, payload_len);
+  }
 
   // and now we can insert the correct value for the checksum
   uint16_t data_len = (uint16_t)(ptr - data);
