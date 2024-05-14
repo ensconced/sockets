@@ -36,7 +36,7 @@ uint16_t compute_checksum(uint32_t source_ip, uint32_t dest_ip, uint8_t *data,
   for (size_t i = 0; i < data_len; i += 2) {
     uint8_t msb = data[i];
     uint8_t lsb = i + 1 == data_len ? 0 : data[i + 1];
-    acc += ((uint32_t)msb << 8) & (uint32_t)lsb;
+    acc += ((uint32_t)msb << 8) | (uint32_t)lsb;
   }
 
   // Now incorporate any overflows back into the lower 16 bits.
@@ -103,6 +103,7 @@ void tcp_send_segment(tcp_stack *stack, tcp_connection *conn, uint8_t *payload,
   // append the actual data
   if (payload_len > 0) {
     memcpy(ptr, payload, payload_len);
+    ptr += payload_len;
   }
 
   // and now we can insert the correct value for the checksum
