@@ -18,6 +18,3 @@ CFLAGS=-Wall \
 	-O1
 
 BIN_DIR=bin
-
-clean:
-	rm -r bin

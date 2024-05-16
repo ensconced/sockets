@@ -1,3 +1,4 @@
 bin
 .DS_Store
-secret_key.c
+tcp/src/isn_generation/secret_key.c
+tcp/src/defines.h
