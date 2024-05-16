@@ -1,9 +1,10 @@
 #include "./checksum.h"
 #include <assert.h>
 #include <stdint.h>
+#include <stdio.h>
 #include <string.h>
 
-void checksum_test(void) {
+void checksum_test_1(void) {
   uint32_t source_ip = (192U << 24) | (168U << 16) | (174U << 8) | 128;
   uint32_t dest_ip = (192U << 24) | (168U << 16) | (174U << 8) | 1;
   uint16_t data_len = 0x26;
@@ -14,6 +15,22 @@ void checksum_test(void) {
       0xe3, 0x6f, 0x6c, 0x69, 0x64, 0x6f, 0x72, 0x0a,
   };
   uint16_t checksum = compute_checksum(source_ip, dest_ip, data, data_len);
-  uint8_t expected_checksum[2] = {0x67, 0xea};
-  assert(memcmp(&checksum, expected_checksum, 2) == 0);
+  assert(checksum == 0x67ea);
+}
+
+void checksum_test_2(void) {
+  uint32_t source_ip = (127 << 24) | 1;
+  uint32_t dest_ip = (127 << 24) | 1;
+  uint16_t data_len = 24;
+  uint8_t data[24] = {
+      0x0b, 0xb9, 0x0b, 0xb8, 0xde, 0xad, 0xbe, 0xef, 0x00, 0x00, 0x00, 0x00,
+      0x60, 0x02, 0x04, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0x04, 0x10, 0x00,
+  };
+  uint16_t checksum = compute_checksum(source_ip, dest_ip, data, data_len);
+  assert(checksum == 0xd6c9);
+}
+
+void checksum_test(void) {
+  checksum_test_1();
+  checksum_test_2();
 }

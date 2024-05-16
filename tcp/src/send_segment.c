@@ -74,9 +74,11 @@ void tcp_send_segment(tcp_stack *stack, tcp_connection *conn, uint8_t *payload,
 
   // and now we can insert the correct value for the checksum
   uint16_t data_len = (uint16_t)(ptr - data);
+
   uint16_t checksum =
       htons(compute_checksum(conn->local_socket.ipv4_addr,
                              conn->remote_socket.ipv4_addr, data, data_len));
+
   memcpy(checksum_ptr, &checksum, sizeof(checksum));
 
   struct sockaddr_in dest_addr = {
@@ -84,6 +86,7 @@ void tcp_send_segment(tcp_stack *stack, tcp_connection *conn, uint8_t *payload,
       .sin_addr =
           (struct in_addr){.s_addr = htonl(conn->remote_socket.ipv4_addr)},
   };
+
   sendto(stack->raw_socket.fd, data, data_len, 0,
          (struct sockaddr *)(&dest_addr), sizeof(dest_addr));
   pthread_mutex_unlock(stack->raw_socket.mutex);
