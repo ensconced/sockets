@@ -23,6 +23,10 @@ test: $(BIN_DIR)/test
 	MallocNanoZone=0 $<
 
 serve: $(BIN_DIR)/serve
+	# Tell the OS itself to ignore any incoming traffic on port 3001 - I want to handle that myself!
+	iptables -t filter --append INPUT --protocol tcp --dport 3001 -j DROP
 	# disable MallocNanoZone as a fix for this issue on macOS
 	# https://stackoverflow.com/questions/69861144/get-an-error-as-a-out40780-0x1130af600-malloc-nano-zone-abandoned-due-to-in
-	MallocNanoZone=0 $<
+	-MallocNanoZone=0 $<
+	# Revert the previous iptables change
+	iptables -t filter --delete INPUT --protocol tcp --dport 3001 -j DROP
