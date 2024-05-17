@@ -2,8 +2,8 @@
 
 #include "../lib.h"
 #include "../tcp_stack.h"
-#include "./md5.h"
-#include "./secret_key.h"
+#include "./md5/md5.h"
+#include "./secret_key/secret_key.h"
 #include <errno.h>
 #include <stdint.h>
 #include <string.h>

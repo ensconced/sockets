@@ -1,7 +1,7 @@
 include ../common.mk
 
 MAIN_FILE = ./src/main.c
-SECRET_KEY_FILE = ./src/isn_generation/secret_key.c
+SECRET_KEY_FILE = ./src/isn_generation/secret_key/secret_key.c
 DEFINES_FILE = ./src/defines.h
 COMMON_FILES = $(shell find . -name '*.c' ! -name '*.test.c' ! -path $(MAIN_FILE) ! -path $(SECRET_KEY_FILE))
 TEST_FILES = $(shell find . -name '*.test.c')

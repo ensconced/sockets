@@ -1,7 +1,7 @@
 #pragma once
 
 #include "./lib.h"
-#include "./tcp_connection_pool.h"
+#include "./tcp_connection/tcp_connection_pool.h"
 #include <openssl/evp.h>
 #include <pthread.h>
 

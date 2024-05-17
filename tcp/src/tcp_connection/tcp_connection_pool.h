@@ -1,6 +1,6 @@
 #pragma once
 
-#include "./hash_map/hash_map.h"
+#include "../hash_map/hash_map.h"
 #include "./tcp_connection.h"
 #include <pthread.h>
 #include <stdint.h>

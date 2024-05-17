@@ -1,6 +1,6 @@
 #pragma once
 
-#include "./secret_key.h"
+#include "../secret_key/secret_key.h"
 #include <openssl/evp.h>
 #include <stdint.h>
 

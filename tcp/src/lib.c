@@ -9,8 +9,8 @@
 
 #include "./isn_generation/generate_isn.h"
 #include "./lib.h"
-#include "./send_segment.h"
-#include "./tcp_connection_pool.h"
+#include "./send_segment/send_segment.h"
+#include "./tcp_connection/tcp_connection_pool.h"
 #include "./tcp_stack.h"
 #include "./utils.h"
 

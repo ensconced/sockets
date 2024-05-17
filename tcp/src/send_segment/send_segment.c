@@ -3,10 +3,10 @@
 #include <string.h>
 #include <sys/socket.h>
 
-#include "./checksum/checksum.h"
-#include "./tcp_connection.h"
-#include "./tcp_stack.h"
-#include "./utils.h"
+#include "../checksum/checksum.h"
+#include "../tcp_connection/tcp_connection.h"
+#include "../tcp_stack.h"
+#include "../utils.h"
 
 // TODO - check how I'm meant to decide this value
 #define MAX_SEGMENT_SIZE 4096
