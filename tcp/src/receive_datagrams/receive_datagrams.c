@@ -1,11 +1,12 @@
 
 #include "../tcp_stack.h"
+#include <stdatomic.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <sys/socket.h>
 
 void *receive_datagrams(tcp_stack *stack) {
-  while (true) {
+  while (!atomic_load(stack->destroyed)) {
     struct sockaddr remote_addr;
     socklen_t remote_addr_len;
     ssize_t bytes_received = recvfrom(

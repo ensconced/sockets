@@ -49,15 +49,18 @@ tcp_stack *tcp_stack_create(void) {
     exit(1);
   }
 
+  atomic_bool *destroyed = malloc(sizeof(atomic_bool));
+  atomic_init(destroyed, false);
+
   tcp_stack *stack = malloc(sizeof(tcp_stack));
   *stack = (tcp_stack){
       .connection_pool = tcp_connection_pool_create(),
       .raw_socket = tcp_raw_socket_create(),
       .md5_algorithm = md5_algorithm,
+      .destroyed = destroyed,
   };
 
-  pthread_t incoming_datagram_handler_thread_id;
-  if (pthread_create(&incoming_datagram_handler_thread_id, NULL,
+  if (pthread_create(&stack->incoming_datagram_handler_thread, NULL,
                      &receive_datagrams, stack) != 0) {
     fprintf(stderr, "Failed to create datagram handling thread\n");
     exit(1);
@@ -74,7 +77,9 @@ tcp_stack *tcp_stack_create(void) {
 }
 
 void tcp_stack_destroy(tcp_stack *stack) {
-  // TODO - should also clean up / join pthreads...
+  atomic_store(stack->destroyed, true);
+  pthread_join(stack->incoming_datagram_handler_thread, NULL);
+  free(stack->destroyed);
   EVP_MD_free(stack->md5_algorithm);
   tcp_raw_socket_destroy(&stack->raw_socket);
   pthread_mutex_lock(stack->connection_pool.mutex);
