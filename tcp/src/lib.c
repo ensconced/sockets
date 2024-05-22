@@ -35,6 +35,10 @@ tcp_connection *tcp_open_passive(tcp_stack *stack, tcp_socket local_socket) {
 
 tcp_connection *tcp_open_active(tcp_stack *stack, tcp_socket local_socket,
                                 tcp_socket remote_socket) {
+
+  //  TODO - what if local socket ip address doesn't match the ip address that
+  //  we opened the raw socket on? Should we try to open another raw socket on
+  //  that ip address?
   tcp_connection *conn = malloc(sizeof(tcp_connection));
   if (conn == NULL) {
     fprintf(stderr, "Failed to malloc connection\n");

@@ -1,4 +1,5 @@
 #include "./tcp_stack.h"
+#include "./config.h"
 #include "./receive_datagrams/receive_datagrams.h"
 #include "./tcp_connection/tcp_connection_pool.h"
 #include <errno.h>
@@ -11,16 +12,30 @@
 #include <unistd.h>
 
 tcp_raw_socket tcp_raw_socket_create(void) {
+  struct sockaddr_in local_sock_addr;
+  local_sock_addr.sin_family = AF_INET;
+  local_sock_addr.sin_addr.s_addr = ntohl(LOCAL_IP);
+
   int ip_sock_fd = socket(PF_INET, SOCK_RAW, IPPROTO_TCP);
   if (ip_sock_fd == -1) {
     fprintf(stderr, "Failed to create socket: %s\n", strerror(errno));
     exit(1);
   }
 
+  if (bind(ip_sock_fd, (struct sockaddr *)&local_sock_addr,
+           sizeof(local_sock_addr)) != 0) {
+    fprintf(stderr, "Failed to bind raw socket: %s", strerror(errno));
+    exit(1);
+  }
+
+  // TODO - error handling
   pthread_mutex_t *socket_mutex = malloc(sizeof(pthread_mutex_t));
+  // TODO - error handling
   pthread_mutex_init(socket_mutex, NULL);
+  // TODO - error handling
   uint8_t *socket_send_buffer =
       malloc(RAW_SOCKET_SEND_BUFFER_LEN * sizeof(uint8_t));
+  // TODO - error handling
   uint8_t *socket_receive_buffer =
       malloc(RAW_SOCKET_RECEIVE_BUFFER_LEN * sizeof(uint8_t));
 
@@ -38,6 +53,7 @@ void tcp_raw_socket_destroy(tcp_raw_socket *raw_socket) {
   }
   free(raw_socket->send_buffer);
   free(raw_socket->receive_buffer);
+  // TODO - error handling
   pthread_mutex_destroy(raw_socket->mutex);
   free(raw_socket->mutex);
 }
@@ -49,9 +65,11 @@ tcp_stack *tcp_stack_create(void) {
     exit(1);
   }
 
+  // TODO - error handling
   atomic_bool *destroyed = malloc(sizeof(atomic_bool));
   atomic_init(destroyed, false);
 
+  // TODO - error handling
   tcp_stack *stack = malloc(sizeof(tcp_stack));
   *stack = (tcp_stack){
       .connection_pool = tcp_connection_pool_create(),

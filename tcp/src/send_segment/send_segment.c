@@ -1,3 +1,4 @@
+#include <errno.h>
 #include <netinet/in.h>
 #include <stdint.h>
 #include <string.h>
@@ -14,6 +15,7 @@
 // this will do for now
 #define WINDOW 1024
 
+// TODO - should we use the tcp_segment type as the param here?
 void tcp_send_segment(tcp_stack *stack, tcp_connection *conn, uint8_t *payload,
                       size_t payload_len, uint8_t flags, uint32_t seq_number,
                       uint32_t ack_number) {
@@ -87,7 +89,9 @@ void tcp_send_segment(tcp_stack *stack, tcp_connection *conn, uint8_t *payload,
           (struct in_addr){.s_addr = htonl(conn->remote_socket.ipv4_addr)},
   };
 
-  sendto(stack->raw_socket.fd, data, data_len, 0,
-         (struct sockaddr *)(&dest_addr), sizeof(dest_addr));
+  if (sendto(stack->raw_socket.fd, data, data_len, 0,
+             (struct sockaddr *)(&dest_addr), sizeof(dest_addr)) == -1) {
+    fprintf(stderr, "Failed to send IP packet: %s\n", strerror(errno));
+  };
   pthread_mutex_unlock(stack->raw_socket.mutex);
 }
