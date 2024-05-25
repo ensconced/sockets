@@ -1,10 +1,5 @@
 # TODO
 
-- add new ip address to machine - 192.168.178.201
-- add this setup to readme
-- bind raw socket to 192.168.178.201 to effectively filter out packets
-
-
 ### TCP
 
 - implement TCP

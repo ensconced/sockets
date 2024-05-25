@@ -14,6 +14,7 @@ uint32_t generate_isn(tcp_stack *stack, tcp_socket local_socket,
   struct timespec time;
   if (clock_gettime(CLOCK_MONOTONIC, &time) != 0) {
     fprintf(stderr, "Error reading clock: %s", strerror(errno));
+    exit(1);
   }
   uint64_t microseconds =
       (uint64_t)time.tv_sec * 1000 * 1000 + (uint64_t)time.tv_nsec / 1000;
