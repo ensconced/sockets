@@ -149,7 +149,7 @@ tcp_segment parse_segment(vec segment_vec) {
 }
 
 void process_incoming_segment(tcp_segment segment) {
-  printf("%x\n", segment.flags);
+  // printf("flags: 0x%x\n", segment.flags);
 }
 
 void *receive_datagrams(tcp_stack *stack) {

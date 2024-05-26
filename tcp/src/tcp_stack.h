@@ -13,6 +13,10 @@ typedef struct tcp_raw_socket {
   pthread_mutex_t *mutex;
 } tcp_raw_socket;
 
+typedef struct tcp_raw_socket_pool {
+  hash_map *raw_sockets_by_local_ip;
+} tcp_raw_socket_pool;
+
 typedef struct tcp_stack {
   atomic_bool *destroyed;
   pthread_t incoming_datagram_handler_thread;

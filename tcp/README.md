@@ -1,5 +1,20 @@
-This is my custom implementation of TCP.
+# Design Notes
 
+This is an implementation of the Transmission Control Protocol. Eventually I intend to write an entire network stack from the ground up, but this incarnation depends on the implemenation of the Internet Protocol that comes built-in to linux.
+
+## Threading
+
+Main thread
+- user action functions are called e.g. OPEN, SEND, RECEIVE, CLOSE, STATUS, ABORT, FLUSH
+
+Receive thread
+- raw sockets are read from...
+
+Timeout thread
+- tracks timeouts
+
+Note that the state machines of the individual connections can be mutated by all three of the threads. The handling of certain actions/events may also result in the connection pool hashmap being mutated. We have a mutex on the connection pool which must be held while using (reading or writing) the connection pool in any way, including the individual connection state machines, or the connection pool hashmap.
+Do I need another mutex on the raw socket pool??
 
 # Configuration
 

@@ -51,7 +51,7 @@ tcp_connection *tcp_open_active(tcp_stack *stack, tcp_socket local_socket,
       .mode = ACTIVE,
       .state = SYN_SENT,
       .local_socket = local_socket,
-      remote_socket = remote_socket,
+      .remote_socket = remote_socket,
       .initial_send_sequence_number = isn,
       .send_next = isn + 1,
   };

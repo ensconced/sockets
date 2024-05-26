@@ -12,19 +12,20 @@
 #include <unistd.h>
 
 tcp_raw_socket tcp_raw_socket_create(void) {
-  struct sockaddr_in local_sock_addr;
-  local_sock_addr.sin_family = AF_INET;
-  local_sock_addr.sin_addr.s_addr = ntohl(LOCAL_IP);
-
   int ip_sock_fd = socket(PF_INET, SOCK_RAW, IPPROTO_TCP);
   if (ip_sock_fd == -1) {
     fprintf(stderr, "Failed to create socket: %s\n", strerror(errno));
     exit(1);
   }
 
-  if (bind(ip_sock_fd, (struct sockaddr *)&local_sock_addr,
-           sizeof(local_sock_addr)) != 0) {
-    fprintf(stderr, "Failed to bind raw socket: %s", strerror(errno));
+  // Enable IP_HDRINCL option so that we can specify which IP address to send
+  // packets from (we'll use whichever address is specified as the local socket
+  // of the TCP connection).
+  int enabled = 1;
+  if (setsockopt(ip_sock_fd, IPPROTO_IP, IP_HDRINCL, &enabled,
+                 sizeof(enabled)) != 0) {
+    fprintf(stderr, "Failed to enable IP_HDINCL on socket: %s\n",
+            strerror(errno));
     exit(1);
   }
 
