@@ -1,4 +1,5 @@
 #include "./tcp_connection_pool.h"
+#include "../error_handling/error_handling.h"
 #include "../hash_map/hash_map.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -6,7 +7,8 @@
 tcp_connection_pool tcp_connection_pool_create(void) {
   hash_map *connections_in_listen_state = hash_map_create();
   hash_map *connections_not_in_listen_state = hash_map_create();
-  pthread_mutex_t *mutex = malloc(sizeof(pthread_mutex_t));
+  pthread_mutex_t *mutex =
+      checked_malloc(sizeof(pthread_mutex_t), "connection pool mutex");
   pthread_mutex_init(mutex, NULL);
   return (tcp_connection_pool){
       .connections_in_listen_state = connections_in_listen_state,

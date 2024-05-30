@@ -1,4 +1,5 @@
 #include "./tcp_connection.h"
+#include "../error_handling/error_handling.h"
 #include "../utils.h"
 #include <stddef.h>
 #include <stdio.h>
@@ -10,11 +11,7 @@ tcp_connection_id tcp_connection_id_create(tcp_socket local_socket,
   size_t byte_count =
       sizeof(local_socket.ipv4_addr) + sizeof(local_socket.port) +
       sizeof(remote_socket.ipv4_addr) + sizeof(remote_socket.port);
-  uint8_t *buffer = malloc(byte_count);
-  if (buffer == NULL) {
-    fprintf(stderr, "Failed to malloc tcp connection id buffer\n");
-    exit(1);
-  }
+  uint8_t *buffer = checked_malloc(byte_count, "tcp connection id buffer");
   uint8_t *ptr = buffer;
   push_value(ptr, local_socket.ipv4_addr);
   push_value(ptr, local_socket.port);

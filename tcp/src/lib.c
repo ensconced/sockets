@@ -7,6 +7,7 @@
 #include <string.h>
 #include <sys/socket.h>
 
+#include "./error_handling/error_handling.h"
 #include "./isn_generation/generate_isn.h"
 #include "./lib.h"
 #include "./send_segment/send_segment.h"
@@ -15,11 +16,7 @@
 #include "./utils.h"
 
 tcp_connection *tcp_open_passive(tcp_stack *stack, tcp_socket local_socket) {
-  tcp_connection *conn = malloc(sizeof(tcp_connection));
-  if (conn == NULL) {
-    fprintf(stderr, "Failed to malloc connection\n");
-    exit(1);
-  }
+  tcp_connection *conn = checked_malloc(sizeof(tcp_connection), "connection");
 
   *conn = (tcp_connection){
       .mode = PASSIVE,
@@ -36,14 +33,8 @@ tcp_connection *tcp_open_passive(tcp_stack *stack, tcp_socket local_socket) {
 tcp_connection *tcp_open_active(tcp_stack *stack, tcp_socket local_socket,
                                 tcp_socket remote_socket) {
 
-  //  TODO - what if local socket ip address doesn't match the ip address that
-  //  we opened the raw socket on? Should we try to open another raw socket on
-  //  that ip address?
-  tcp_connection *conn = malloc(sizeof(tcp_connection));
-  if (conn == NULL) {
-    fprintf(stderr, "Failed to malloc connection\n");
-    exit(1);
-  }
+  tcp_connection *conn =
+      checked_malloc(sizeof(tcp_connection), "tcp_connection");
 
   uint32_t isn = generate_isn(stack, local_socket, remote_socket);
 

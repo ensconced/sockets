@@ -1,5 +1,3 @@
-#define _POSIX_C_SOURCE 199309L
-
 #include "../lib.h"
 #include "../tcp_stack.h"
 #include "./md5/md5.h"

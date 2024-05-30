@@ -1,5 +1,6 @@
 #include "./tcp_stack.h"
 #include "./config.h"
+#include "./error_handling/error_handling.h"
 #include "./receive_datagrams/receive_datagrams.h"
 #include "./tcp_connection/tcp_connection_pool.h"
 #include <errno.h>
@@ -29,16 +30,14 @@ tcp_raw_socket tcp_raw_socket_create(void) {
     exit(1);
   }
 
-  // TODO - error handling
-  pthread_mutex_t *socket_mutex = malloc(sizeof(pthread_mutex_t));
+  pthread_mutex_t *socket_mutex =
+      checked_malloc(sizeof(pthread_mutex_t), "socket mutex");
   // TODO - error handling
   pthread_mutex_init(socket_mutex, NULL);
-  // TODO - error handling
-  uint8_t *socket_send_buffer =
-      malloc(RAW_SOCKET_SEND_BUFFER_LEN * sizeof(uint8_t));
-  // TODO - error handling
-  uint8_t *socket_receive_buffer =
-      malloc(RAW_SOCKET_RECEIVE_BUFFER_LEN * sizeof(uint8_t));
+  uint8_t *socket_send_buffer = checked_malloc(
+      RAW_SOCKET_SEND_BUFFER_LEN * sizeof(uint8_t), "socket_send_buffer");
+  uint8_t *socket_receive_buffer = checked_malloc(
+      RAW_SOCKET_RECEIVE_BUFFER_LEN * sizeof(uint8_t), "socket_receive_buffer");
 
   return (tcp_raw_socket){
       .fd = ip_sock_fd,
@@ -66,12 +65,11 @@ tcp_stack *tcp_stack_create(void) {
     exit(1);
   }
 
-  // TODO - error handling
-  atomic_bool *destroyed = malloc(sizeof(atomic_bool));
+  atomic_bool *destroyed =
+      checked_malloc(sizeof(atomic_bool), "destroyed flag");
   atomic_init(destroyed, false);
 
-  // TODO - error handling
-  tcp_stack *stack = malloc(sizeof(tcp_stack));
+  tcp_stack *stack = checked_malloc(sizeof(tcp_stack), "tcp_stack");
   *stack = (tcp_stack){
       .connection_pool = tcp_connection_pool_create(),
       .raw_socket = tcp_raw_socket_create(),

@@ -1,4 +1,5 @@
 #include "./hash_map.h"
+#include "../error_handling/error_handling.h"
 #include <assert.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -48,8 +49,8 @@ void hash_map_test_basic_functionality(void) {
 void hash_map_test_high_load(void) {
   hash_map *hm = hash_map_create();
   size_t count = 1000000;
-  uint32_t *keys = malloc(count * sizeof(uint32_t));
-  uint32_t *values = malloc(count * sizeof(uint32_t));
+  uint32_t *keys = checked_malloc(count * sizeof(uint32_t), "keys");
+  uint32_t *values = checked_malloc(count * sizeof(uint32_t), "values");
   for (uint32_t i = 0; i < count; i++) {
     keys[i] = i;
     values[i] = i * 2;
@@ -69,15 +70,16 @@ void hash_map_test_high_load(void) {
 void hash_map_test_iteration(void) {
   hash_map *hm = hash_map_create();
   size_t count = 1000;
-  uint32_t *keys = malloc(count * sizeof(uint32_t));
-  uint32_t *values = malloc(count * sizeof(uint32_t));
+  uint32_t *keys = checked_malloc(count * sizeof(uint32_t), "keys");
+  uint32_t *values = checked_malloc(count * sizeof(uint32_t), "values");
   for (uint32_t i = 0; i < count; i++) {
     keys[i] = i;
     values[i] = i * 2;
     hash_map_insert(hm, &keys[i], sizeof(uint32_t), &values[i]);
   }
 
-  uint32_t *iterator_values = malloc(count * sizeof(uint32_t));
+  uint32_t *iterator_values =
+      checked_malloc(count * sizeof(uint32_t), "iterator_values");
   hash_map_iterator *iterator = hash_map_iterator_create(hm);
 
   uint32_t *val;

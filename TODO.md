@@ -1,10 +1,7 @@
 # TODO
 
-- don't bind raw socket, just ignore any traffic not matching any of our connections...
-
-- currently it throws an error if you try to use a local ip address of anything besides
-  192.168.178.202. in theory we should allow you to specify any local ip address, and only throw an
-  error if we fail to bind to it. (can add more static ip addresses to the test server to test this out...). this means we will need to maintain a whole pool of raw ip sockets? and potentially use something like select/poll/epoll to read/write to them?
+- strerror is not threadsafe - come up with better error handling solution
+- write tests based on wireshark CLI
 
 ### TCP
 

@@ -23,8 +23,9 @@ $(SERVER_BINARY): $(COMMON_SRC_FILES) $(HEADER_FILES) $(SECRET_KEY_FILE) $(MAIN_
 $(TEST_BINARY): $(COMMON_SRC_FILES) $(HEADER_FILES) $(SECRET_KEY_FILE) $(TEST_FILES) | $(BIN_DIR)
 	$(CC) $(CFLAGS) -o $(TEST_BINARY) $(COMMON_SRC_FILES) $(SECRET_KEY_FILE) $(TEST_FILES)
 
-test: $(TEST_BINARY)
-	MallocNanoZone=0 $<
+test: $(TEST_BINARY) $(SERVER_BINARY)
+	MallocNanoZone=0 $(TEST_BINARY)
+	./scripts/test.sh
 
 serve: $(SERVER_BINARY)
 	# disable MallocNanoZone as a fix for this issue on macOS

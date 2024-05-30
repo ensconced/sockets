@@ -12,7 +12,7 @@ CFLAGS=-Wall \
 	-std=c17 \
 	-fsanitize=address,undefined \
 	-g \
-	-D_POSIX_C_SOURCE=199309L \
+	-D_POSIX_C_SOURCE=200112L \
 	-lssl \
 	-lcrypto \
 	-O1

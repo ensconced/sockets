@@ -1,5 +1,6 @@
 #pragma once
 
+#include <stdint.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -10,18 +11,11 @@
     ptr += sizeof(value);                                                      \
   } while (0)
 
-#define take_value(vec, ptr, value)                                            \
-  do {                                                                         \
-    if (ptr + sizeof(value) <= vec.buffer + vec.len) {                         \
-      memcpy(&value, ptr, sizeof(value));                                      \
-      ptr += sizeof(value);                                                    \
-    } else {                                                                   \
-      fprintf(stderr, "Attempted to take value from outside buffer bounds\n"); \
-      exit(1);                                                                 \
-    }                                                                          \
-  } while (0)
-
 typedef struct vec {
   uint8_t *buffer;
   size_t len;
 } vec;
+
+void take_uint8_t(vec v, uint8_t **ptr, uint8_t *value_result);
+void take_uint16_t(vec v, uint8_t **ptr, uint16_t *value_result);
+void take_uint32_t(vec v, uint8_t **ptr, uint32_t *value_result);

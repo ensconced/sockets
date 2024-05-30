@@ -5,6 +5,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "../error_handling/error_handling.h"
+
 #define FNV_PRIME 0x01000193
 #define FNV_OFFSET_BASIS 0x811c9dc5
 #define INITIAL_BUFFER_LEN 64
@@ -46,16 +48,9 @@ uint32_t fnv1a_hash(void *data, size_t data_len) {
 }
 
 hash_map *hash_map_create(void) {
-  hash_map *hm = malloc(sizeof(hash_map));
-  if (hm == NULL) {
-    fprintf(stderr, "Failed to malloc hash map\n");
-    exit(1);
-  }
-  buffer_entry *buffer = calloc(INITIAL_BUFFER_LEN, sizeof(buffer_entry));
-  if (buffer == NULL) {
-    fprintf(stderr, "Failed to calloc hash map buffer\n");
-    exit(1);
-  }
+  hash_map *hm = checked_malloc(sizeof(hash_map), "hash_map");
+  buffer_entry *buffer =
+      checked_calloc(INITIAL_BUFFER_LEN, sizeof(buffer_entry), "buffer_entry");
   *hm = (hash_map){
       .buffer = buffer,
       .buffer_len = INITIAL_BUFFER_LEN,
@@ -88,7 +83,8 @@ void hash_map_insert_key_value(hash_map *hm, void *key, size_t key_len,
 }
 
 void hash_map_rehash(hash_map *hm, uint32_t new_buffer_len) {
-  buffer_entry *new_buffer = calloc(new_buffer_len, sizeof(buffer_entry));
+  buffer_entry *new_buffer =
+      checked_calloc(new_buffer_len, sizeof(buffer_entry), "buffer_entry");
   hash_map new_hash_map = {
       .buffer = new_buffer,
       .buffer_len = new_buffer_len,
@@ -181,11 +177,8 @@ void *hash_map_iterator_take(hash_map_iterator *iterator) {
 }
 
 hash_map_iterator *hash_map_iterator_create(hash_map *hm) {
-  hash_map_iterator *iter = malloc(sizeof(hash_map_iterator));
-  if (iter == NULL) {
-    fprintf(stderr, "Failed to malloc iterator\n");
-    exit(1);
-  }
+  hash_map_iterator *iter =
+      checked_malloc(sizeof(hash_map_iterator), "hash_map_iterator");
   *iter = (hash_map_iterator){
       .hm = hm,
       .idx = 0,

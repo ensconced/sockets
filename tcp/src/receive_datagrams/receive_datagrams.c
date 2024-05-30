@@ -54,18 +54,18 @@ ip_datagram parse_datagram(vec datagram_vec) {
   uint32_t big_endian_source_address;
   uint32_t big_endian_dest_address;
 
-  take_value(datagram_vec, ptr, version_and_header_length);
+  take_uint8_t(datagram_vec, &ptr, &version_and_header_length);
   uint8_t header_length_in_words = version_and_header_length & 0x0F;
 
-  take_value(datagram_vec, ptr, type_of_service);
-  take_value(datagram_vec, ptr, big_endian_total_length);
-  take_value(datagram_vec, ptr, big_endian_identification);
-  take_value(datagram_vec, ptr, flags_and_big_endian_fragment_offset);
-  take_value(datagram_vec, ptr, ttl);
-  take_value(datagram_vec, ptr, protocol);
-  take_value(datagram_vec, ptr, big_endian_header_checksum);
-  take_value(datagram_vec, ptr, big_endian_source_address);
-  take_value(datagram_vec, ptr, big_endian_dest_address);
+  take_uint8_t(datagram_vec, &ptr, &type_of_service);
+  take_uint16_t(datagram_vec, &ptr, &big_endian_total_length);
+  take_uint16_t(datagram_vec, &ptr, &big_endian_identification);
+  take_uint16_t(datagram_vec, &ptr, &flags_and_big_endian_fragment_offset);
+  take_uint8_t(datagram_vec, &ptr, &ttl);
+  take_uint8_t(datagram_vec, &ptr, &protocol);
+  take_uint16_t(datagram_vec, &ptr, &big_endian_header_checksum);
+  take_uint32_t(datagram_vec, &ptr, &big_endian_source_address);
+  take_uint32_t(datagram_vec, &ptr, &big_endian_dest_address);
 
   size_t header_length_in_bytes = header_length_in_words * 4;
   size_t options_length_in_bytes =
@@ -111,15 +111,15 @@ tcp_segment parse_segment(vec segment_vec) {
   uint16_t big_endian_urgent_pointer;
 
   uint8_t *ptr = segment_vec.buffer;
-  take_value(segment_vec, ptr, big_endian_source_port);
-  take_value(segment_vec, ptr, big_endian_dest_port);
-  take_value(segment_vec, ptr, big_endian_sequence_number);
-  take_value(segment_vec, ptr, big_endian_acknowledgement_number);
-  take_value(segment_vec, ptr, data_offset_and_reserved_space);
-  take_value(segment_vec, ptr, flags);
-  take_value(segment_vec, ptr, big_endian_window);
-  take_value(segment_vec, ptr, big_endian_checksum);
-  take_value(segment_vec, ptr, big_endian_urgent_pointer);
+  take_uint16_t(segment_vec, &ptr, &big_endian_source_port);
+  take_uint16_t(segment_vec, &ptr, &big_endian_dest_port);
+  take_uint32_t(segment_vec, &ptr, &big_endian_sequence_number);
+  take_uint32_t(segment_vec, &ptr, &big_endian_acknowledgement_number);
+  take_uint8_t(segment_vec, &ptr, &data_offset_and_reserved_space);
+  take_uint8_t(segment_vec, &ptr, &flags);
+  take_uint16_t(segment_vec, &ptr, &big_endian_window);
+  take_uint16_t(segment_vec, &ptr, &big_endian_checksum);
+  take_uint16_t(segment_vec, &ptr, &big_endian_urgent_pointer);
   uint8_t *options_ptr = ptr;
   uint8_t data_offset_in_words = data_offset_and_reserved_space >> 4;
   uint8_t *data_ptr = segment_vec.buffer + data_offset_in_words * 4;
