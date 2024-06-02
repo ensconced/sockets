@@ -1,6 +1,7 @@
 #include "./tcp_connection_pool.h"
 #include "../error_handling/error_handling.h"
 #include "../hash_map/hash_map.h"
+#include "../utils.h"
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -19,8 +20,8 @@ tcp_connection_pool tcp_connection_pool_create(void) {
 
 void tcp_connection_pool_add(tcp_connection_pool connection_pool,
                              tcp_connection *connection) {
-  tcp_connection_id connection_id = tcp_connection_id_create(
-      connection->local_socket, connection->remote_socket);
+  vec connection_id = tcp_connection_id_create(connection->local_socket,
+                                               connection->remote_socket);
   hash_map *hash_map_to_add_to =
       connection->mode == PASSIVE
           ? connection_pool.connections_in_listen_state
@@ -28,14 +29,14 @@ void tcp_connection_pool_add(tcp_connection_pool connection_pool,
 
   // TODO - could optimise this with a `hash_map_insert_if_not_already_present`
   // function.
-  tcp_connection *existing_connection = hash_map_get(
-      hash_map_to_add_to, connection_id.buffer, connection_id.buffer_len);
+  tcp_connection *existing_connection =
+      hash_map_get(hash_map_to_add_to, connection_id.buffer, connection_id.len);
   if (existing_connection != NULL) {
     fprintf(stderr, "Connection already exists\n");
     exit(1);
   }
-  hash_map_insert(hash_map_to_add_to, connection_id.buffer,
-                  connection_id.buffer_len, connection);
+  hash_map_insert(hash_map_to_add_to, connection_id.buffer, connection_id.len,
+                  connection);
   tcp_connection_id_destroy(connection_id);
 }
 

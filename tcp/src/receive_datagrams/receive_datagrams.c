@@ -43,29 +43,20 @@ typedef struct tcp_segment {
 ip_datagram parse_datagram(vec datagram_vec) {
   // TODO - there is no bounds checking here!
   uint8_t *ptr = datagram_vec.buffer;
-  uint8_t version_and_header_length;
-  uint8_t type_of_service;
-  uint16_t big_endian_total_length;
-  uint16_t big_endian_identification;
-  uint16_t flags_and_big_endian_fragment_offset;
-  uint8_t ttl;
-  uint8_t protocol;
-  uint16_t big_endian_header_checksum;
-  uint32_t big_endian_source_address;
-  uint32_t big_endian_dest_address;
 
-  take_uint8_t(datagram_vec, &ptr, &version_and_header_length);
+  uint8_t version_and_header_length = take_uint8_t(datagram_vec, &ptr);
   uint8_t header_length_in_words = version_and_header_length & 0x0F;
 
-  take_uint8_t(datagram_vec, &ptr, &type_of_service);
-  take_uint16_t(datagram_vec, &ptr, &big_endian_total_length);
-  take_uint16_t(datagram_vec, &ptr, &big_endian_identification);
-  take_uint16_t(datagram_vec, &ptr, &flags_and_big_endian_fragment_offset);
-  take_uint8_t(datagram_vec, &ptr, &ttl);
-  take_uint8_t(datagram_vec, &ptr, &protocol);
-  take_uint16_t(datagram_vec, &ptr, &big_endian_header_checksum);
-  take_uint32_t(datagram_vec, &ptr, &big_endian_source_address);
-  take_uint32_t(datagram_vec, &ptr, &big_endian_dest_address);
+  uint8_t type_of_service = take_uint8_t(datagram_vec, &ptr);
+  uint16_t big_endian_total_length = take_uint16_t(datagram_vec, &ptr);
+  uint16_t big_endian_identification = take_uint16_t(datagram_vec, &ptr);
+  uint16_t flags_and_big_endian_fragment_offset =
+      take_uint16_t(datagram_vec, &ptr);
+  uint8_t ttl = take_uint8_t(datagram_vec, &ptr);
+  uint8_t protocol = take_uint8_t(datagram_vec, &ptr);
+  uint16_t big_endian_header_checksum = take_uint16_t(datagram_vec, &ptr);
+  uint32_t big_endian_source_address = take_uint32_t(datagram_vec, &ptr);
+  uint32_t big_endian_dest_address = take_uint32_t(datagram_vec, &ptr);
 
   size_t header_length_in_bytes = header_length_in_words * 4;
   size_t options_length_in_bytes =
@@ -100,26 +91,16 @@ ip_datagram parse_datagram(vec datagram_vec) {
 }
 
 tcp_segment parse_segment(vec segment_vec) {
-  uint16_t big_endian_source_port;
-  uint16_t big_endian_dest_port;
-  uint32_t big_endian_sequence_number;
-  uint32_t big_endian_acknowledgement_number;
-  uint8_t data_offset_and_reserved_space;
-  uint8_t flags;
-  uint16_t big_endian_window;
-  uint16_t big_endian_checksum;
-  uint16_t big_endian_urgent_pointer;
-
   uint8_t *ptr = segment_vec.buffer;
-  take_uint16_t(segment_vec, &ptr, &big_endian_source_port);
-  take_uint16_t(segment_vec, &ptr, &big_endian_dest_port);
-  take_uint32_t(segment_vec, &ptr, &big_endian_sequence_number);
-  take_uint32_t(segment_vec, &ptr, &big_endian_acknowledgement_number);
-  take_uint8_t(segment_vec, &ptr, &data_offset_and_reserved_space);
-  take_uint8_t(segment_vec, &ptr, &flags);
-  take_uint16_t(segment_vec, &ptr, &big_endian_window);
-  take_uint16_t(segment_vec, &ptr, &big_endian_checksum);
-  take_uint16_t(segment_vec, &ptr, &big_endian_urgent_pointer);
+  uint16_t big_endian_source_port = take_uint16_t(segment_vec, &ptr);
+  uint16_t big_endian_dest_port = take_uint16_t(segment_vec, &ptr);
+  uint32_t big_endian_sequence_number = take_uint32_t(segment_vec, &ptr);
+  uint32_t big_endian_acknowledgement_number = take_uint32_t(segment_vec, &ptr);
+  uint8_t data_offset_and_reserved_space = take_uint8_t(segment_vec, &ptr);
+  uint8_t flags = take_uint8_t(segment_vec, &ptr);
+  uint16_t big_endian_window = take_uint16_t(segment_vec, &ptr);
+  uint16_t big_endian_checksum = take_uint16_t(segment_vec, &ptr);
+  uint16_t big_endian_urgent_pointer = take_uint16_t(segment_vec, &ptr);
   uint8_t *options_ptr = ptr;
   uint8_t data_offset_in_words = data_offset_and_reserved_space >> 4;
   uint8_t *data_ptr = segment_vec.buffer + data_offset_in_words * 4;
@@ -157,7 +138,7 @@ void *receive_datagrams(tcp_stack *stack) {
     struct sockaddr remote_addr;
     socklen_t remote_addr_len;
     ssize_t bytes_received = recvfrom(
-        stack->raw_socket.fd, stack->raw_socket.receive_buffer,
+        stack->raw_socket.fd, stack->raw_socket.receive_buffer.buffer,
         RAW_SOCKET_RECEIVE_BUFFER_LEN, 0, &remote_addr, &remote_addr_len);
 
     if (bytes_received == -1) {
@@ -167,7 +148,7 @@ void *receive_datagrams(tcp_stack *stack) {
     }
 
     ip_datagram ip_datagram = parse_datagram((vec){
-        .buffer = stack->raw_socket.receive_buffer,
+        .buffer = stack->raw_socket.receive_buffer.buffer,
         .len = (size_t)bytes_received,
     });
     if (ip_datagram.protocol == IPPROTO_TCP) {

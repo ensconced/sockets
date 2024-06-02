@@ -8,8 +8,8 @@
 
 typedef struct tcp_raw_socket {
   int fd;
-  uint8_t *send_buffer;
-  uint8_t *receive_buffer;
+  vec send_buffer;
+  vec receive_buffer;
   pthread_mutex_t *mutex;
 } tcp_raw_socket;
 

@@ -51,8 +51,8 @@ void tcp_raw_socket_destroy(tcp_raw_socket *raw_socket) {
   if (close(raw_socket->fd) != 0) {
     fprintf(stderr, "Failed to close raw socket: %s\n", strerror(errno));
   }
-  free(raw_socket->send_buffer);
-  free(raw_socket->receive_buffer);
+  free(raw_socket->send_buffer.buffer);
+  free(raw_socket->receive_buffer.buffer);
   // TODO - error handling
   pthread_mutex_destroy(raw_socket->mutex);
   free(raw_socket->mutex);

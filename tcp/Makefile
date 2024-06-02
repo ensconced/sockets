@@ -24,8 +24,7 @@ $(TEST_BINARY): $(COMMON_SRC_FILES) $(HEADER_FILES) $(SECRET_KEY_FILE) $(TEST_FI
 	$(CC) $(CFLAGS) -o $(TEST_BINARY) $(COMMON_SRC_FILES) $(SECRET_KEY_FILE) $(TEST_FILES)
 
 test: $(TEST_BINARY) $(SERVER_BINARY)
-	MallocNanoZone=0 $(TEST_BINARY)
-	./scripts/test.sh
+	MallocNanoZone=0 $(TEST_BINARY) && ./scripts/test.sh && echo "tests passed :)"
 
 serve: $(SERVER_BINARY)
 	# disable MallocNanoZone as a fix for this issue on macOS

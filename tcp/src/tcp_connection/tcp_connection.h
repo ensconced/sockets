@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../tcp_socket.h"
+#include "../utils.h"
 #include <stddef.h>
 #include <stdint.h>
 
@@ -38,11 +39,5 @@ typedef struct tcp_connection {
   uint32_t initial_receive_sequence_number;
 } tcp_connection;
 
-typedef struct tcp_connection_id {
-  uint8_t *buffer;
-  size_t buffer_len;
-} tcp_connection_id;
-
-tcp_connection_id tcp_connection_id_create(tcp_socket local_socket,
-                                           tcp_socket remote_socket);
-void tcp_connection_id_destroy(tcp_connection_id connection_id);
+vec tcp_connection_id_create(tcp_socket local_socket, tcp_socket remote_socket);
+void tcp_connection_id_destroy(vec connection_id);
