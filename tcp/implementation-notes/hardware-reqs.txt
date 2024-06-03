@@ -2,4 +2,4 @@ Operations that I don't currently have in hardware but will probably need
 
 - 32 bit registers...
 - 32 bit unsigned arithmetic
-- 16 bit one's complement addition
+- 16 bit one's complement addition (nah, just use 32 bit twos complement as I do in the C implementation...)

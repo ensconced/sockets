@@ -1,7 +1,7 @@
 # TODO
 
 - strerror is not threadsafe - come up with better error handling solution
-- write tests based on wireshark CLI
+- write more tests based on wireshark CLI
 
 ### TCP
 
