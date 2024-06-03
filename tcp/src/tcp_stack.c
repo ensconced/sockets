@@ -42,8 +42,16 @@ tcp_raw_socket tcp_raw_socket_create(void) {
   return (tcp_raw_socket){
       .fd = ip_sock_fd,
       .mutex = socket_mutex,
-      .send_buffer = socket_send_buffer,
-      .receive_buffer = socket_receive_buffer,
+      .send_buffer =
+          (vec){
+              .buffer = socket_send_buffer,
+              .len = RAW_SOCKET_SEND_BUFFER_LEN,
+          },
+      .receive_buffer =
+          (vec){
+              .buffer = socket_receive_buffer,
+              .len = RAW_SOCKET_RECEIVE_BUFFER_LEN,
+          },
   };
 }
 
