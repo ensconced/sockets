@@ -43,7 +43,6 @@ typedef struct tcp_segment {
 // time I receive it? I think not - so I should really do it myself...
 
 ip_datagram parse_datagram(vec datagram_vec) {
-  // TODO - there is no bounds checking here!
   uint8_t *ptr = datagram_vec.buffer;
 
   uint8_t version_and_header_length = take_uint8_t(datagram_vec, &ptr);

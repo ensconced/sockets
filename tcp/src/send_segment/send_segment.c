@@ -15,7 +15,6 @@
 // this will do for now
 #define WINDOW 1024
 
-// TODO - bounds checking!
 void write_tcp_segment(vec buffer, uint8_t **ptr, tcp_connection *conn,
                        uint8_t *payload, size_t payload_len, uint8_t flags,
                        uint32_t seq_number, uint32_t ack_number) {
@@ -66,8 +65,13 @@ void write_tcp_segment(vec buffer, uint8_t **ptr, tcp_connection *conn,
 
   // append the actual data
   if (payload_len > 0) {
-    memcpy(ptr, payload, payload_len);
-    ptr += payload_len;
+    if (*ptr + payload_len <= buffer.buffer + buffer.len) {
+      memcpy(*ptr, payload, payload_len);
+      ptr += payload_len;
+    } else {
+      fprintf(stderr, "Payload does not fit in buffer\n");
+      exit(1);
+    }
   }
 
   uint16_t data_len = (uint16_t)(*ptr - start);

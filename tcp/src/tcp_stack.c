@@ -32,8 +32,11 @@ tcp_raw_socket tcp_raw_socket_create(void) {
 
   pthread_mutex_t *socket_mutex =
       checked_malloc(sizeof(pthread_mutex_t), "socket mutex");
-  // TODO - error handling
-  pthread_mutex_init(socket_mutex, NULL);
+  int mutex_init_result = pthread_mutex_init(socket_mutex, NULL);
+  if (mutex_init_result != 0) {
+    fprintf(stderr, "Failed to init mutex: %s\n", strerror(mutex_init_result));
+    exit(1);
+  };
   uint8_t *socket_send_buffer = checked_malloc(
       RAW_SOCKET_SEND_BUFFER_LEN * sizeof(uint8_t), "socket_send_buffer");
   uint8_t *socket_receive_buffer = checked_malloc(
@@ -58,11 +61,17 @@ tcp_raw_socket tcp_raw_socket_create(void) {
 void tcp_raw_socket_destroy(tcp_raw_socket *raw_socket) {
   if (close(raw_socket->fd) != 0) {
     fprintf(stderr, "Failed to close raw socket: %s\n", strerror(errno));
+    exit(1);
   }
   free(raw_socket->send_buffer.buffer);
   free(raw_socket->receive_buffer.buffer);
-  // TODO - error handling
-  pthread_mutex_destroy(raw_socket->mutex);
+  int mutex_destroy_result = pthread_mutex_destroy(raw_socket->mutex);
+  if (mutex_destroy_result != 0) {
+    fprintf(stderr, "Failed to destroy mutex: %s\n",
+            strerror(mutex_destroy_result));
+    exit(1);
+  };
+
   free(raw_socket->mutex);
 }
 
