@@ -1,3 +1,4 @@
+#include "../checksum/checksum.h"
 #include "../tcp_stack.h"
 #include "../utils.h"
 #include <errno.h>
@@ -11,6 +12,7 @@
 
 typedef struct ip_datagram {
   uint8_t version;
+  uint8_t internet_header_length;
   uint8_t type_of_service;
   uint16_t identification;
   uint8_t flags;
@@ -76,6 +78,7 @@ ip_datagram parse_datagram(vec datagram_vec) {
 
   return (ip_datagram){
       .version = version_and_header_length >> 4,
+      .internet_header_length = header_length_in_words,
       .type_of_service = type_of_service,
       .identification = ntohs(big_endian_identification),
       .flags = flags_and_big_endian_fragment_offset >> 13,
@@ -130,7 +133,13 @@ tcp_segment parse_segment(vec segment_vec) {
 }
 
 void process_incoming_segment(tcp_segment segment) {
-  // printf("flags: 0x%x\n", segment.flags);
+  printf("flags: 0x%x\n", segment.flags);
+}
+
+bool verify_checksum(uint8_t *buffer, size_t header_length_in_32bit_words) {
+  uint32_t csum = 0;
+  checksum_update(&csum, buffer, header_length_in_32bit_words * 4);
+  return checksum_finalize(&csum) == 0;
 }
 
 void *receive_datagrams(tcp_stack *stack) {
@@ -147,15 +156,20 @@ void *receive_datagrams(tcp_stack *stack) {
       exit(1);
     }
 
-    ip_datagram ip_datagram = parse_datagram((vec){
+    ip_datagram packet = parse_datagram((vec){
         .buffer = stack->raw_socket.receive_buffer.buffer,
         .len = (size_t)bytes_received,
     });
-    if (ip_datagram.protocol == IPPROTO_TCP) {
-      // TODO - should do some validation of ip packet first - e.g. check
-      // checksum, check ip version...
-      tcp_segment segment = parse_segment(ip_datagram.data_in_receive_buffer);
-      process_incoming_segment(segment);
+    if (packet.protocol == IPPROTO_TCP) {
+      // TODO - could also check ip version? (or that that already ensured at
+      // this point)
+      if (verify_checksum(stack->raw_socket.receive_buffer.buffer,
+                          packet.internet_header_length)) {
+        tcp_segment segment = parse_segment(packet.data_in_receive_buffer);
+        process_incoming_segment(segment);
+      } else {
+        printf("checksum failed\n");
+      }
     }
   }
   return NULL;

@@ -1,7 +1,8 @@
 # TODO
 
+- implement process_incoming_segment
+- get to the established state
 - strerror is not threadsafe - come up with better error handling solution
-- write tests based on wireshark CLI
 
 ### TCP
 
