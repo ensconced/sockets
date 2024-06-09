@@ -40,6 +40,22 @@ void tcp_connection_pool_add(tcp_connection_pool connection_pool,
   tcp_connection_id_destroy(connection_id);
 }
 
+tcp_connection *tcp_connection_pool_find(tcp_connection_pool connection_pool,
+                                         tcp_socket local_socket,
+                                         tcp_socket remote_socket) {
+  vec connection_id = tcp_connection_id_create(local_socket, remote_socket);
+  tcp_connection *found =
+      hash_map_get(connection_pool.connections_not_in_listen_state,
+                   connection_id.buffer, connection_id.len);
+  //  TODO - uncomment
+  // if (found == NULL) {
+  //   found = hash_map_get(connection_pool.connections_in_listen_state,
+  //                        connection_id.buffer, connection_id.len);
+  // }
+  tcp_connection_id_destroy(connection_id);
+  return found;
+}
+
 void tcp_connection_pool_free_all_connections(
     tcp_connection_pool *connection_pool) {
   hash_map_iterator *listen_state_iter =

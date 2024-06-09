@@ -149,6 +149,10 @@ void tcp_send_segment(tcp_stack *stack, tcp_connection *conn, uint8_t *payload,
   memcpy(total_ip_packet_length_ptr, &big_endian_total_ip_packet_length,
          sizeof(big_endian_total_ip_packet_length));
 
+  // TODO - do I actually need to write the checksum myself or will it
+  // automatically get filled in? See table at
+  // https://man7.org/linux/man-pages/man7/raw.7.html
+  // Also note the other fields that will get filled in for me...
   uint32_t csum = 0;
   checksum_update(&csum, stack->raw_socket.send_buffer.buffer,
                   total_ip_packet_length);

@@ -15,3 +15,6 @@ tcp_connection_pool tcp_connection_pool_create(void);
 void tcp_connection_pool_destroy(tcp_connection_pool *connection_pool);
 void tcp_connection_pool_add(tcp_connection_pool connection_pool,
                              tcp_connection *connection);
+tcp_connection *tcp_connection_pool_find(tcp_connection_pool connection_pool,
+                                         tcp_socket local_socket,
+                                         tcp_socket remote_socket);

@@ -131,8 +131,25 @@ tcp_segment parse_segment(vec segment_vec) {
   };
 }
 
-void process_incoming_segment(tcp_segment segment) {
-  printf("flags: 0x%x\n", segment.flags);
+void process_incoming_segment(tcp_stack *stack, uint32_t source_address,
+                              uint32_t dest_address, tcp_segment segment) {
+  pthread_mutex_lock(stack->connection_pool.mutex);
+  tcp_socket local_socket = {
+      .ipv4_addr = dest_address,
+      .port = segment.dest_port,
+  };
+  tcp_socket remote_socket = {
+      .ipv4_addr = source_address,
+      .port = segment.source_port,
+  };
+  tcp_connection *connection = tcp_connection_pool_find(
+      stack->connection_pool, local_socket, remote_socket);
+
+  if (connection) {
+    printf("found connection! %p\n", (void *)connection);
+  }
+
+  pthread_mutex_unlock(stack->connection_pool.mutex);
 }
 
 bool verify_checksum(uint8_t *buffer, size_t header_length_in_32bit_words) {
@@ -145,6 +162,7 @@ void *receive_datagrams(tcp_stack *stack) {
   while (!atomic_load(stack->destroyed)) {
     struct sockaddr remote_addr;
     socklen_t remote_addr_len;
+    // TODO - can I just use recv instead?
     ssize_t bytes_received = recvfrom(
         stack->raw_socket.fd, stack->raw_socket.receive_buffer.buffer,
         RAW_SOCKET_RECEIVE_BUFFER_LEN, 0, &remote_addr, &remote_addr_len);
@@ -159,13 +177,14 @@ void *receive_datagrams(tcp_stack *stack) {
         .buffer = stack->raw_socket.receive_buffer.buffer,
         .len = (size_t)bytes_received,
     });
+    // TODO - I guess this check is actually redundant, since I'm using
+    // IPPROTO_TCP when creating the raw socket?
     if (packet.protocol == IPPROTO_TCP) {
-      // TODO - could also check ip version? (or that that already ensured at
-      // this point)
       if (verify_checksum(stack->raw_socket.receive_buffer.buffer,
                           packet.internet_header_length)) {
         tcp_segment segment = parse_segment(packet.data_in_receive_buffer);
-        process_incoming_segment(segment);
+        process_incoming_segment(stack, packet.source_address,
+                                 packet.dest_address, segment);
       } else {
         printf("checksum failed\n");
       }

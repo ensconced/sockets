@@ -1,5 +1,6 @@
 # TODO
 
+- debug - not finding SYN ACK - try wireshark alongside lldb?...
 - implement process_incoming_segment
 - get to the established state
 - strerror is not threadsafe - come up with better error handling solution
