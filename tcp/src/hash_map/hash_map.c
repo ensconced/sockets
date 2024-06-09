@@ -9,7 +9,7 @@
 
 #define FNV_PRIME 0x01000193
 #define FNV_OFFSET_BASIS 0x811c9dc5
-#define INITIAL_BUFFER_LEN 64
+#define INITIAL_BUFFER_LEN 32
 #define MAX_LOAD_FACTOR 0.5
 
 typedef enum buffer_entry_type {

@@ -37,7 +37,6 @@ void tcp_connection_pool_add(tcp_connection_pool connection_pool,
   }
   hash_map_insert(hash_map_to_add_to, connection_id.buffer, connection_id.len,
                   connection);
-  tcp_connection_id_destroy(connection_id);
 }
 
 tcp_connection *tcp_connection_pool_find(tcp_connection_pool connection_pool,

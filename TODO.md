@@ -4,6 +4,7 @@
 - implement process_incoming_segment
 - get to the established state
 - strerror is not threadsafe - come up with better error handling solution
+- switch over to using lower-level packet sockets (https://linux.die.net/man/7/packet) (initially with SOCK_DGRAM, and then eventually even lower-level SOCK_RAW...) - requires implementing ARP myself, I think?
 
 ### TCP
 

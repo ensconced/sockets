@@ -1,6 +1,8 @@
 #include "../checksum/checksum.h"
+#include "../config.h"
 #include "../tcp_stack.h"
 #include "../utils.h"
+#include <arpa/inet.h>
 #include <errno.h>
 #include <netinet/in.h>
 #include <stdatomic.h>
@@ -138,10 +140,12 @@ void process_incoming_segment(tcp_stack *stack, uint32_t source_address,
       .ipv4_addr = dest_address,
       .port = segment.dest_port,
   };
+
   tcp_socket remote_socket = {
       .ipv4_addr = source_address,
       .port = segment.source_port,
   };
+
   tcp_connection *connection = tcp_connection_pool_find(
       stack->connection_pool, local_socket, remote_socket);
 
@@ -160,12 +164,13 @@ bool verify_checksum(uint8_t *buffer, size_t header_length_in_32bit_words) {
 
 void *receive_datagrams(tcp_stack *stack) {
   while (!atomic_load(stack->destroyed)) {
-    struct sockaddr remote_addr;
+    struct sockaddr_in remote_addr;
     socklen_t remote_addr_len;
     // TODO - can I just use recv instead?
-    ssize_t bytes_received = recvfrom(
-        stack->raw_socket.fd, stack->raw_socket.receive_buffer.buffer,
-        RAW_SOCKET_RECEIVE_BUFFER_LEN, 0, &remote_addr, &remote_addr_len);
+    ssize_t bytes_received =
+        recvfrom(stack->raw_socket.fd, stack->raw_socket.receive_buffer.buffer,
+                 RAW_SOCKET_RECEIVE_BUFFER_LEN, 0,
+                 (struct sockaddr *)(&remote_addr), &remote_addr_len);
 
     if (bytes_received == -1) {
       fprintf(stderr, "Failed to receive from raw socket: %s\n",
@@ -173,10 +178,20 @@ void *receive_datagrams(tcp_stack *stack) {
       exit(1);
     }
 
+    //  TODO - remove debugging stuff...
+    char ip[INET_ADDRSTRLEN]; // Storage for IP string
+    inet_ntop(AF_INET, &remote_addr.sin_addr, ip, INET_ADDRSTRLEN);
+
     ip_datagram packet = parse_datagram((vec){
         .buffer = stack->raw_socket.receive_buffer.buffer,
         .len = (size_t)bytes_received,
     });
+
+    // if (packet.source_address == REMOTE_IP) {
+    //   printf("remote IP: %x, src: %x, dst: %x\n", REMOTE_IP,
+    //          packet.source_address, packet.dest_address);
+    // }
+
     // TODO - I guess this check is actually redundant, since I'm using
     // IPPROTO_TCP when creating the raw socket?
     if (packet.protocol == IPPROTO_TCP) {
