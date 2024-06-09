@@ -5,6 +5,15 @@
 #include "./tcp_socket.h"
 #include <stdint.h>
 
+#define CWR 128
+#define ECE 64
+#define URG 32
+#define ACK 16
+#define PSH 8
+#define RST 4
+#define SYN 2
+#define FIN 1
+
 typedef struct tcp_connection tcp_connection;
 typedef struct tcp_stack tcp_stack;
 

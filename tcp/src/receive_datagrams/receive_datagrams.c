@@ -1,5 +1,6 @@
 #include "../checksum/checksum.h"
 #include "../config.h"
+#include "../lib.h"
 #include "../tcp_stack.h"
 #include "../utils.h"
 #include <arpa/inet.h>
@@ -150,7 +151,7 @@ void process_incoming_segment(tcp_stack *stack, uint32_t source_address,
       stack->connection_pool, local_socket, remote_socket);
 
   if (connection) {
-    printf("found connection! %p\n", (void *)connection);
+    printf("found connection, now lets process! flags: 0x%x\n", segment.flags);
   }
 
   pthread_mutex_unlock(stack->connection_pool.mutex);
