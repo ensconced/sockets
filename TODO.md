@@ -1,6 +1,7 @@
 # TODO
 
 - debug - not finding SYN ACK - try wireshark alongside lldb?...
+- ...it seems that it's actually iptables that's the problem here??? it's blocking my incoming packets...I thought it wasn't meant to affect raw sockets though??
 - implement process_incoming_segment
 - get to the established state
 - strerror is not threadsafe - come up with better error handling solution

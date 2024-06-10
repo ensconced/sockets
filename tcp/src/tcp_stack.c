@@ -13,7 +13,7 @@
 #include <unistd.h>
 
 tcp_raw_socket tcp_raw_socket_create(void) {
-  int ip_sock_fd = socket(PF_INET, SOCK_RAW, IPPROTO_TCP);
+  int ip_sock_fd = socket(AF_INET, SOCK_RAW, IPPROTO_TCP);
   if (ip_sock_fd == -1) {
     fprintf(stderr, "Failed to create socket: %s\n", strerror(errno));
     exit(1);

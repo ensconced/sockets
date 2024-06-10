@@ -179,10 +179,6 @@ void *receive_datagrams(tcp_stack *stack) {
       exit(1);
     }
 
-    //  TODO - remove debugging stuff...
-    char ip[INET_ADDRSTRLEN]; // Storage for IP string
-    inet_ntop(AF_INET, &remote_addr.sin_addr, ip, INET_ADDRSTRLEN);
-
     ip_datagram packet = parse_datagram((vec){
         .buffer = stack->raw_socket.receive_buffer.buffer,
         .len = (size_t)bytes_received,
