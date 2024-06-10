@@ -5,6 +5,7 @@
 #include "../utils.h"
 #include <arpa/inet.h>
 #include <errno.h>
+#include <linux/if_packet.h>
 #include <netinet/in.h>
 #include <stdatomic.h>
 #include <stdbool.h>
@@ -165,13 +166,12 @@ bool verify_checksum(uint8_t *buffer, size_t header_length_in_32bit_words) {
 
 void *receive_datagrams(tcp_stack *stack) {
   while (!atomic_load(stack->destroyed)) {
-    struct sockaddr_in remote_addr;
-    socklen_t remote_addr_len;
+    // struct sockaddr_ll remote_addr;
+    // socklen_t remote_addr_len;
     // TODO - can I just use recv instead?
     ssize_t bytes_received =
-        recvfrom(stack->raw_socket.fd, stack->raw_socket.receive_buffer.buffer,
-                 RAW_SOCKET_RECEIVE_BUFFER_LEN, 0,
-                 (struct sockaddr *)(&remote_addr), &remote_addr_len);
+        recv(stack->raw_socket.fd, stack->raw_socket.receive_buffer.buffer,
+             RAW_SOCKET_RECEIVE_BUFFER_LEN, 0);
 
     if (bytes_received == -1) {
       fprintf(stderr, "Failed to receive from raw socket: %s\n",

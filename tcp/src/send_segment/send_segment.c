@@ -1,10 +1,13 @@
 #include <errno.h>
+#include <linux/if_packet.h>
+#include <net/if.h>
 #include <netinet/in.h>
 #include <stdint.h>
 #include <string.h>
 #include <sys/socket.h>
 
 #include "../checksum/checksum.h"
+#include "../config.h"
 #include "../tcp_connection/tcp_connection.h"
 #include "../tcp_stack.h"
 #include "../utils.h"
@@ -162,10 +165,18 @@ void tcp_send_segment(tcp_stack *stack, tcp_connection *conn, uint8_t *payload,
 
   //  TODO - this could just be created once and kept on the tcp connection
   //  object.
-  struct sockaddr_in dest_addr = {
-      .sin_family = AF_INET,
-      .sin_addr =
-          (struct in_addr){.s_addr = htonl(conn->remote_socket.ipv4_addr)},
+
+  unsigned int interface_index = if_nametoindex("enp1s0");
+  if (interface_index == 0) {
+    fprintf(stderr, "Failed to find interface index: %s\n", strerror(errno));
+    exit(1);
+  }
+
+  struct sockaddr_ll dest_addr = {
+      .sll_family = AF_PACKET,
+      .sll_addr = {0xf4, 0x84, 0x12, 0x35, 0x5d, 0x48, 0x00, 0x00},
+      .sll_halen = 6,
+      .sll_ifindex = (int)interface_index,
   };
 
   uint16_t data_len = (uint16_t)(ptr - stack->raw_socket.send_buffer.buffer);

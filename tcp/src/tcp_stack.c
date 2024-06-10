@@ -4,31 +4,24 @@
 #include "./receive_datagrams/receive_datagrams.h"
 #include "./tcp_connection/tcp_connection_pool.h"
 #include <errno.h>
+#include <linux/if_ether.h>
+#include <linux/if_packet.h>
 #include <netinet/in.h>
 #include <openssl/evp.h>
 #include <pthread.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
+#include <sys/socket.h>
 #include <unistd.h>
 
 tcp_raw_socket tcp_raw_socket_create(void) {
-  int ip_sock_fd = socket(AF_INET, SOCK_RAW, IPPROTO_TCP);
+  int ip_sock_fd = socket(AF_PACKET, SOCK_DGRAM, htons(ETH_P_IP));
   if (ip_sock_fd == -1) {
     fprintf(stderr, "Failed to create socket: %s\n", strerror(errno));
     exit(1);
   }
-
-  // Enable IP_HDRINCL option so that we can specify which IP address to send
-  // packets from (we'll use whichever address is specified as the local socket
-  // of the TCP connection).
-  int enabled = 1;
-  if (setsockopt(ip_sock_fd, IPPROTO_IP, IP_HDRINCL, &enabled,
-                 sizeof(enabled)) != 0) {
-    fprintf(stderr, "Failed to enable IP_HDINCL on socket: %s\n",
-            strerror(errno));
-    exit(1);
-  }
+  // TODO - do I need to bind?
 
   pthread_mutex_t *socket_mutex =
       checked_malloc(sizeof(pthread_mutex_t), "socket mutex");
