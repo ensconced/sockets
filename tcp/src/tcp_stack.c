@@ -6,6 +6,8 @@
 #include <errno.h>
 #include <linux/if_ether.h>
 #include <linux/if_packet.h>
+#include <net/ethernet.h>
+#include <net/if.h>
 #include <netinet/in.h>
 #include <openssl/evp.h>
 #include <pthread.h>
@@ -21,7 +23,20 @@ tcp_raw_socket tcp_raw_socket_create(void) {
     fprintf(stderr, "Failed to create socket: %s\n", strerror(errno));
     exit(1);
   }
-  // TODO - do I need to bind?
+  unsigned int interface_index = if_nametoindex("enp1s0");
+  if (interface_index == 0) {
+    fprintf(stderr, "Failed to find interface index: %s\n", strerror(errno));
+    exit(1);
+  }
+  // TODO - error handling
+  struct sockaddr_ll sa = {
+      .sll_family = AF_PACKET,
+      .sll_ifindex = (int)interface_index,
+      .sll_protocol = htons(ETH_P_IP),
+  };
+  if (bind(ip_sock_fd, (struct sockaddr *)&sa, sizeof(sa)) == -1) {
+    fprintf(stderr, "Failed to bind: %s\n", strerror(errno));
+  };
 
   pthread_mutex_t *socket_mutex =
       checked_malloc(sizeof(pthread_mutex_t), "socket mutex");

@@ -1,5 +1,7 @@
 # TODO
 
+- check checksums using wireshark validation
+- WHY am I not getting a SYN/ACK back?
 - debug - not finding SYN ACK - try wireshark alongside lldb?...
 - ...it seems that it's actually iptables that's the problem here??? it's blocking my incoming packets...I thought it wasn't meant to affect raw sockets though??
 - maybe try using QUEUE/NFQUEUE as suggested in the comments here https://serverfault.com/questions/387263/disable-kernel-processing-of-tcp-packets-for-raw-socket - you then have to explicitly read from the queue in your code, but that's maybe not so bad? eventually we will move over to using AF_PACKET anyway, which hopefully will actually bypass iptables rules?

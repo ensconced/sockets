@@ -1,4 +1,5 @@
 #include <errno.h>
+#include <linux/if_ether.h>
 #include <linux/if_packet.h>
 #include <net/if.h>
 #include <netinet/in.h>
@@ -164,8 +165,8 @@ void tcp_send_segment(tcp_stack *stack, tcp_connection *conn, uint8_t *payload,
          sizeof(big_endian_checksum));
 
   //  TODO - this could just be created once and kept on the tcp connection
-  //  object.
-
+  //  object?
+  // TODO - what if there are multiple
   unsigned int interface_index = if_nametoindex("enp1s0");
   if (interface_index == 0) {
     fprintf(stderr, "Failed to find interface index: %s\n", strerror(errno));
@@ -174,9 +175,10 @@ void tcp_send_segment(tcp_stack *stack, tcp_connection *conn, uint8_t *payload,
 
   struct sockaddr_ll dest_addr = {
       .sll_family = AF_PACKET,
-      .sll_addr = {0xf4, 0x84, 0x12, 0x35, 0x5d, 0x48, 0x00, 0x00},
+      .sll_addr = {0x48, 0x5d, 0x35, 0x12, 0x84, 0xf4, 0x00, 0x00},
       .sll_halen = 6,
       .sll_ifindex = (int)interface_index,
+      .sll_protocol = htons(ETH_P_IP),
   };
 
   uint16_t data_len = (uint16_t)(ptr - stack->raw_socket.send_buffer.buffer);
