@@ -175,16 +175,46 @@ void tcp_send_segment(tcp_stack *stack, tcp_connection *conn, uint8_t *payload,
 
   struct sockaddr_ll dest_addr = {
       .sll_family = AF_PACKET,
-      .sll_addr = {0x48, 0x5d, 0x35, 0x12, 0x84, 0xf4, 0x00, 0x00},
-      .sll_halen = 6,
+      // .sll_addr = {0x48, 0x5d, 0x35, 0x12, 0x84, 0xf4, 0x00, 0x00},
+      .sll_addr = {0xe4, 0x5f, 0x01, 0x77, 0x76, 0x38, 0x00, 0x00}, // rpi2
+      .sll_halen = ETH_ALEN,
       .sll_ifindex = (int)interface_index,
       .sll_protocol = htons(ETH_P_IP),
   };
 
-  uint16_t data_len = (uint16_t)(ptr - stack->raw_socket.send_buffer.buffer);
-  if (sendto(stack->raw_socket.fd, stack->raw_socket.send_buffer.buffer,
-             data_len, 0, (struct sockaddr *)(&dest_addr),
-             sizeof(dest_addr)) == -1) {
+  //  uint16_t data_len = (uint16_t)(ptr -
+  //  stack->raw_socket.send_buffer.buffer);
+
+  // TODO - remove this debugging stuff...
+  uint8_t hard_data[60] = {
+      0x45,                   // version and ihl
+      0x00,                   // type of service
+      0x00, 0x3c,             // total length
+      0xf1, 0x3c,             // identification
+      0x40, 0x00,             // flags and fragment offset
+      0x40,                   // time to live
+      0x06,                   // protocol
+      0x63, 0x4c,             // checksum
+      0xc0, 0xa8, 0xb2, 0xca, // big_endian_source_address
+      0xc0, 0xa8, 0xb2, 0x17, // big_endian_dest_address
+      0xbd, 0x3a,             // source port
+      0x00, 0x50,             // dest port
+      0x82, 0x58, 0x8f, 0x5a, // seq
+      0x00, 0x00, 0x00, 0x00, // ack
+      0xa0,                   // data offset
+      0x02,                   // flags
+      0xfa, 0xf0,             // window??
+      0x7d, 0xd7,             // checksum
+      0x00, 0x00,             // urgent pointer
+      0x02,                   // max_segment_size_option_kind
+      0x04,                   // max_segment_size_option_length
+      0x05, 0xb4,             // max_segment_size_value
+      0x04, 0x02, 0x08, 0x0a, 0xb5, 0x42, 0x64, 0x84, // payload...
+      0x00, 0x00, 0x00, 0x00, 0x01, 0x03, 0x03, 0x07,
+  };
+
+  if (sendto(stack->raw_socket.fd, hard_data, 60, 0,
+             (struct sockaddr *)(&dest_addr), sizeof(dest_addr)) == -1) {
     fprintf(stderr, "Failed to send IP packet: %s\n", strerror(errno));
   };
 

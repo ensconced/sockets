@@ -28,6 +28,7 @@ tcp_raw_socket tcp_raw_socket_create(void) {
     fprintf(stderr, "Failed to find interface index: %s\n", strerror(errno));
     exit(1);
   }
+  // TODO - is binding necessary??
   // TODO - error handling
   struct sockaddr_ll sa = {
       .sll_family = AF_PACKET,
