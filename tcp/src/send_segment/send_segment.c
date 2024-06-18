@@ -29,9 +29,9 @@ void write_tcp_segment(vec buffer, uint8_t **ptr, tcp_connection *conn,
   uint16_t window = htons(WINDOW);
   uint16_t checksum = 0;
   uint16_t urgent_pointer = htons(0); // TODO
-  // uint8_t max_segment_size_option_kind = 2;
-  // uint8_t max_segment_size_option_length = 4;
-  // uint16_t max_segment_size_value = htons(MAX_SEGMENT_SIZE);
+  uint8_t max_segment_size_option_kind = 2;
+  uint8_t max_segment_size_option_length = 4;
+  uint16_t max_segment_size_value = htons(MAX_SEGMENT_SIZE);
   uint8_t end_of_option_list = 0;
 
   // we'll initially write a zero for the data offset but will overwrite it once
@@ -55,35 +55,9 @@ void write_tcp_segment(vec buffer, uint8_t **ptr, tcp_connection *conn,
   push_uint16_t(buffer, ptr, checksum);
   push_uint16_t(buffer, ptr, urgent_pointer);
 
-  // TODO - do options propertly.....
-  push_uint8_t(buffer, ptr, 0x02);
-  push_uint8_t(buffer, ptr, 0x04);
-  push_uint8_t(buffer, ptr, 0x05);
-  push_uint8_t(buffer, ptr, 0xb4);
-
-  push_uint8_t(buffer, ptr, 0x04);
-  push_uint8_t(buffer, ptr, 0x02);
-  push_uint8_t(buffer, ptr, 0x08);
-  push_uint8_t(buffer, ptr, 0x0a);
-
-  push_uint8_t(buffer, ptr, 0xb5);
-  push_uint8_t(buffer, ptr, 0x42);
-  push_uint8_t(buffer, ptr, 0x64);
-  push_uint8_t(buffer, ptr, 0x84);
-
-  push_uint8_t(buffer, ptr, 0x00);
-  push_uint8_t(buffer, ptr, 0x00);
-  push_uint8_t(buffer, ptr, 0x00);
-  push_uint8_t(buffer, ptr, 0x00);
-
-  push_uint8_t(buffer, ptr, 0x01);
-  push_uint8_t(buffer, ptr, 0x03);
-  push_uint8_t(buffer, ptr, 0x03);
-  push_uint8_t(buffer, ptr, 0x07);
-
-  // push_uint8_t(buffer, ptr, max_segment_size_option_kind);
-  // push_uint8_t(buffer, ptr, max_segment_size_option_length);
-  // push_uint16_t(buffer, ptr, max_segment_size_value);
+  push_uint8_t(buffer, ptr, max_segment_size_option_kind);
+  push_uint8_t(buffer, ptr, max_segment_size_option_length);
+  push_uint16_t(buffer, ptr, max_segment_size_value);
   // pad out options until they reach a 32bit word boundary
   while ((*ptr - start) % 4) {
     push_uint8_t(buffer, ptr, end_of_option_list);
@@ -195,7 +169,7 @@ void tcp_send_segment(tcp_stack *stack, tcp_connection *conn, uint8_t *payload,
 
   //  TODO - this could just be created once and kept on the tcp connection
   //  object?
-  // TODO - what if there are multiple
+  // TODO - what if there are multiple? re-read `man packet`!
   unsigned int interface_index = if_nametoindex("enp1s0");
   if (interface_index == 0) {
     fprintf(stderr, "Failed to find interface index: %s\n", strerror(errno));
@@ -204,45 +178,11 @@ void tcp_send_segment(tcp_stack *stack, tcp_connection *conn, uint8_t *payload,
 
   struct sockaddr_ll dest_addr = {
       .sll_family = AF_PACKET,
-      // .sll_addr = {0x48, 0x5d, 0x35, 0x12, 0x84, 0xf4, 0x00, 0x00},
       .sll_addr = {0xe4, 0x5f, 0x01, 0x77, 0x76, 0x38, 0x00, 0x00}, // rpi2
       .sll_halen = ETH_ALEN,
       .sll_ifindex = (int)interface_index,
       .sll_protocol = htons(ETH_P_IP),
   };
-
-  //  uint16_t data_len = (uint16_t)(ptr -
-  //  stack->raw_socket.send_buffer.buffer);
-
-  // TODO - remove this debugging stuff...
-  // uint8_t expected_data[60] = {
-  //     0x45,                               // version and ihl
-  //     0x00,                               // type of service
-  //     0x00, 0x3c,                         // total length
-  //     0xf1, 0x3c,                         // identification
-  //     0x40, 0x00,                         // flags and fragment offset
-  //     0x40,                               // time to live
-  //     0x06,                               // protocol
-  //     0x63, 0x4c,                         // checksum
-  //     0xc0, 0xa8, 0xb2, 0xca,             // big_endian_source_address
-  //     0xc0, 0xa8, 0xb2, 0x17,             // big_endian_dest_address
-  //     0xbd, 0x3a,                         // source port
-  //     0x00, 0x50,                         // dest port
-  //     0x82, 0x58, 0x8f, 0x5a,             // seq
-  //     0x00, 0x00, 0x00, 0x00,             // ack
-  //     0xa0,                               // data offset
-  //     0x02,                               // flags
-  //     0xfa, 0xf0,                         // window??
-  //     0x7d, 0xd7,                         // checksum
-  //     0x00, 0x00,                         // urgent pointer
-  //     0x02,                               // max_segment_size_option_kind
-  //     0x04,                               // max_segment_size_option_length
-  //     0x05, 0xb4,                         // max_segment_size_value
-  //     0x04, 0x02,                         // enable selective acknowledgement
-  //     0x08, 0x0a,                         // enable tcp timestamps
-  //     0xb5, 0x42, 0x64, 0x84, 0x00, 0x00, // more options???
-  //     0x00, 0x00, 0x01, 0x03, 0x03, 0x07,
-  // };
 
   if (sendto(stack->raw_socket.fd, stack->raw_socket.send_buffer.buffer,
              total_ip_packet_length, 0, (struct sockaddr *)(&dest_addr),
