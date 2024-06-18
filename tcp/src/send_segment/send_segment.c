@@ -14,10 +14,10 @@
 #include "../utils.h"
 
 // TODO - check how I'm meant to decide this value
-#define MAX_SEGMENT_SIZE 4096
+#define MAX_SEGMENT_SIZE 0x05b4
 // TODO - I think this should be based on the size of my recieve buffer...but
 // this will do for now
-#define WINDOW 1024
+#define WINDOW 0xf0fa
 
 void write_tcp_segment(vec buffer, uint8_t **ptr, tcp_connection *conn,
                        uint8_t *payload, size_t payload_len, uint8_t flags,
@@ -29,9 +29,9 @@ void write_tcp_segment(vec buffer, uint8_t **ptr, tcp_connection *conn,
   uint16_t window = htons(WINDOW);
   uint16_t checksum = 0;
   uint16_t urgent_pointer = htons(0); // TODO
-  uint8_t max_segment_size_option_kind = 2;
-  uint8_t max_segment_size_option_length = 4;
-  uint16_t max_segment_size_value = htons(MAX_SEGMENT_SIZE);
+  // uint8_t max_segment_size_option_kind = 2;
+  // uint8_t max_segment_size_option_length = 4;
+  // uint16_t max_segment_size_value = htons(MAX_SEGMENT_SIZE);
   uint8_t end_of_option_list = 0;
 
   // we'll initially write a zero for the data offset but will overwrite it once
@@ -54,9 +54,36 @@ void write_tcp_segment(vec buffer, uint8_t **ptr, tcp_connection *conn,
   uint8_t *checksum_ptr = *ptr;
   push_uint16_t(buffer, ptr, checksum);
   push_uint16_t(buffer, ptr, urgent_pointer);
-  push_uint8_t(buffer, ptr, max_segment_size_option_kind);
-  push_uint8_t(buffer, ptr, max_segment_size_option_length);
-  push_uint16_t(buffer, ptr, max_segment_size_value);
+
+  // TODO - do options propertly.....
+  push_uint8_t(buffer, ptr, 0x02);
+  push_uint8_t(buffer, ptr, 0x04);
+  push_uint8_t(buffer, ptr, 0x05);
+  push_uint8_t(buffer, ptr, 0xb4);
+
+  push_uint8_t(buffer, ptr, 0x04);
+  push_uint8_t(buffer, ptr, 0x02);
+  push_uint8_t(buffer, ptr, 0x08);
+  push_uint8_t(buffer, ptr, 0x0a);
+
+  push_uint8_t(buffer, ptr, 0xb5);
+  push_uint8_t(buffer, ptr, 0x42);
+  push_uint8_t(buffer, ptr, 0x64);
+  push_uint8_t(buffer, ptr, 0x84);
+
+  push_uint8_t(buffer, ptr, 0x00);
+  push_uint8_t(buffer, ptr, 0x00);
+  push_uint8_t(buffer, ptr, 0x00);
+  push_uint8_t(buffer, ptr, 0x00);
+
+  push_uint8_t(buffer, ptr, 0x01);
+  push_uint8_t(buffer, ptr, 0x03);
+  push_uint8_t(buffer, ptr, 0x03);
+  push_uint8_t(buffer, ptr, 0x07);
+
+  // push_uint8_t(buffer, ptr, max_segment_size_option_kind);
+  // push_uint8_t(buffer, ptr, max_segment_size_option_length);
+  // push_uint16_t(buffer, ptr, max_segment_size_value);
   // pad out options until they reach a 32bit word boundary
   while ((*ptr - start) % 4) {
     push_uint8_t(buffer, ptr, end_of_option_list);
@@ -71,7 +98,7 @@ void write_tcp_segment(vec buffer, uint8_t **ptr, tcp_connection *conn,
   if (payload_len > 0) {
     if (*ptr + payload_len <= buffer.buffer + buffer.len) {
       memcpy(*ptr, payload, payload_len);
-      ptr += payload_len;
+      *ptr += payload_len;
     } else {
       fprintf(stderr, "Payload does not fit in buffer\n");
       exit(1);
@@ -108,10 +135,10 @@ void write_ipv4_header(vec send_buffer, uint8_t **ptr, uint32_t source_address,
   // this gets filled in later
   uint16_t total_length = 0;
   // TODO - this is fine as zero for now, because I'm using "Don't Fragment"
-  uint16_t identification = 0;
+  uint16_t identification = 0x3cf1; // TODO - for debugging...
   // TODO - I guess this is correct if we're not using fragmentation?
-  uint16_t flags_and_fragment_offset = 0;
-  uint8_t time_to_live = 64;
+  uint16_t flags_and_fragment_offset = 0x0040; // TODO - value for debugging
+  uint8_t time_to_live = 0x40;
   uint8_t protocol = IPPROTO_TCP;
   uint16_t checksum = 0;
   uint8_t version_and_ihl = (uint8_t)(version << 4) | internet_header_length;
@@ -145,21 +172,23 @@ void tcp_send_segment(tcp_stack *stack, tcp_connection *conn, uint8_t *payload,
   write_ipv4_header(stack->raw_socket.send_buffer, &ptr,
                     conn->local_socket.ipv4_addr, conn->remote_socket.ipv4_addr,
                     &total_ip_packet_length_ptr, &ip_header_checksum_ptr);
+
+  // TODO - could return this from write_ipv4_header
+  uint16_t total_ip_header_length =
+      (uint16_t)(ptr - stack->raw_socket.send_buffer.buffer);
+
   write_tcp_segment(stack->raw_socket.send_buffer, &ptr, conn, payload,
                     payload_len, flags, seq_number, ack_number);
+
   uint16_t total_ip_packet_length =
       (uint16_t)(ptr - stack->raw_socket.send_buffer.buffer);
   uint16_t big_endian_total_ip_packet_length = htons(total_ip_packet_length);
   memcpy(total_ip_packet_length_ptr, &big_endian_total_ip_packet_length,
          sizeof(big_endian_total_ip_packet_length));
 
-  // TODO - do I actually need to write the checksum myself or will it
-  // automatically get filled in? See table at
-  // https://man7.org/linux/man-pages/man7/raw.7.html
-  // Also note the other fields that will get filled in for me...
   uint32_t csum = 0;
   checksum_update(&csum, stack->raw_socket.send_buffer.buffer,
-                  total_ip_packet_length);
+                  total_ip_header_length);
   uint16_t big_endian_checksum = htons(checksum_finalize(&csum));
   memcpy(ip_header_checksum_ptr, &big_endian_checksum,
          sizeof(big_endian_checksum));
@@ -186,35 +215,38 @@ void tcp_send_segment(tcp_stack *stack, tcp_connection *conn, uint8_t *payload,
   //  stack->raw_socket.send_buffer.buffer);
 
   // TODO - remove this debugging stuff...
-  uint8_t hard_data[60] = {
-      0x45,                   // version and ihl
-      0x00,                   // type of service
-      0x00, 0x3c,             // total length
-      0xf1, 0x3c,             // identification
-      0x40, 0x00,             // flags and fragment offset
-      0x40,                   // time to live
-      0x06,                   // protocol
-      0x63, 0x4c,             // checksum
-      0xc0, 0xa8, 0xb2, 0xca, // big_endian_source_address
-      0xc0, 0xa8, 0xb2, 0x17, // big_endian_dest_address
-      0xbd, 0x3a,             // source port
-      0x00, 0x50,             // dest port
-      0x82, 0x58, 0x8f, 0x5a, // seq
-      0x00, 0x00, 0x00, 0x00, // ack
-      0xa0,                   // data offset
-      0x02,                   // flags
-      0xfa, 0xf0,             // window??
-      0x7d, 0xd7,             // checksum
-      0x00, 0x00,             // urgent pointer
-      0x02,                   // max_segment_size_option_kind
-      0x04,                   // max_segment_size_option_length
-      0x05, 0xb4,             // max_segment_size_value
-      0x04, 0x02, 0x08, 0x0a, 0xb5, 0x42, 0x64, 0x84, // payload...
-      0x00, 0x00, 0x00, 0x00, 0x01, 0x03, 0x03, 0x07,
-  };
+  // uint8_t expected_data[60] = {
+  //     0x45,                               // version and ihl
+  //     0x00,                               // type of service
+  //     0x00, 0x3c,                         // total length
+  //     0xf1, 0x3c,                         // identification
+  //     0x40, 0x00,                         // flags and fragment offset
+  //     0x40,                               // time to live
+  //     0x06,                               // protocol
+  //     0x63, 0x4c,                         // checksum
+  //     0xc0, 0xa8, 0xb2, 0xca,             // big_endian_source_address
+  //     0xc0, 0xa8, 0xb2, 0x17,             // big_endian_dest_address
+  //     0xbd, 0x3a,                         // source port
+  //     0x00, 0x50,                         // dest port
+  //     0x82, 0x58, 0x8f, 0x5a,             // seq
+  //     0x00, 0x00, 0x00, 0x00,             // ack
+  //     0xa0,                               // data offset
+  //     0x02,                               // flags
+  //     0xfa, 0xf0,                         // window??
+  //     0x7d, 0xd7,                         // checksum
+  //     0x00, 0x00,                         // urgent pointer
+  //     0x02,                               // max_segment_size_option_kind
+  //     0x04,                               // max_segment_size_option_length
+  //     0x05, 0xb4,                         // max_segment_size_value
+  //     0x04, 0x02,                         // enable selective acknowledgement
+  //     0x08, 0x0a,                         // enable tcp timestamps
+  //     0xb5, 0x42, 0x64, 0x84, 0x00, 0x00, // more options???
+  //     0x00, 0x00, 0x01, 0x03, 0x03, 0x07,
+  // };
 
-  if (sendto(stack->raw_socket.fd, hard_data, 60, 0,
-             (struct sockaddr *)(&dest_addr), sizeof(dest_addr)) == -1) {
+  if (sendto(stack->raw_socket.fd, stack->raw_socket.send_buffer.buffer,
+             total_ip_packet_length, 0, (struct sockaddr *)(&dest_addr),
+             sizeof(dest_addr)) == -1) {
     fprintf(stderr, "Failed to send IP packet: %s\n", strerror(errno));
   };
 

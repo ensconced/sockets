@@ -36,7 +36,9 @@ tcp_connection *tcp_open_active(tcp_stack *stack, tcp_socket local_socket,
   tcp_connection *conn =
       checked_malloc(sizeof(tcp_connection), "tcp_connection");
 
-  uint32_t isn = generate_isn(stack, local_socket, remote_socket);
+  // TODO - reinstate proper version of this...
+  uint32_t isn = 0x82588f5a;
+  // generate_isn(stack, local_socket, remote_socket);
 
   *conn = (tcp_connection){
       .mode = ACTIVE,

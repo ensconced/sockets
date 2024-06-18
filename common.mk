@@ -15,6 +15,6 @@ CFLAGS=-Wall \
 	-D_POSIX_C_SOURCE=200112L \
 	-lssl \
 	-lcrypto \
-	-Og
+	-O0
 
 BIN_DIR=bin
