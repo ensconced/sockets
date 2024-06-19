@@ -14,16 +14,16 @@
 #include "../utils.h"
 
 // TODO - check how I'm meant to decide this value
-#define MAX_SEGMENT_SIZE 0x05b4
+#define MAX_SEGMENT_SIZE 1024
 // TODO - I think this should be based on the size of my recieve buffer...but
 // this will do for now
-#define WINDOW 0xf0fa
+#define WINDOW 1024
 
 void write_tcp_segment(vec buffer, uint8_t **ptr, tcp_connection *conn,
                        uint8_t *payload, size_t payload_len, uint8_t flags,
                        uint32_t seq_number, uint32_t ack_number) {
-  uint16_t source_port = htons(conn->local_socket.port);
-  uint16_t dest_port = htons(conn->remote_socket.port);
+  uint16_t source_port = conn->local_socket.network_order_port;
+  uint16_t dest_port = conn->remote_socket.network_order_port;
   uint32_t seq = htonl(seq_number);
   uint32_t ack = htonl(ack_number);
   uint16_t window = htons(WINDOW);
@@ -82,10 +82,10 @@ void write_tcp_segment(vec buffer, uint8_t **ptr, tcp_connection *conn,
   uint16_t data_len = (uint16_t)(*ptr - start);
 
   uint16_t pseudo_header[6] = {
-      htonl(conn->local_socket.ipv4_addr) >> 16,
-      htonl(conn->local_socket.ipv4_addr) & 0xFFFF,
-      htonl(conn->remote_socket.ipv4_addr) >> 16,
-      htonl(conn->remote_socket.ipv4_addr) & 0xFFFF,
+      conn->local_socket.network_order_ipv4_addr >> 16,
+      conn->local_socket.network_order_ipv4_addr & 0xFFFF,
+      conn->remote_socket.network_order_ipv4_addr >> 16,
+      conn->remote_socket.network_order_ipv4_addr & 0xFFFF,
       htons(IPPROTO_TCP),
       htons(data_len),
   };
@@ -109,7 +109,7 @@ void write_ipv4_header(vec send_buffer, uint8_t **ptr, uint32_t source_address,
   // this gets filled in later
   uint16_t total_length = 0;
   // TODO - this is fine as zero for now, because I'm using "Don't Fragment"
-  uint16_t identification = 0x3cf1; // TODO - for debugging...
+  uint16_t identification = 0;
   // TODO - I guess this is correct if we're not using fragmentation?
   uint16_t flags_and_fragment_offset = 0x0040; // TODO - value for debugging
   uint8_t time_to_live = 0x40;
@@ -127,9 +127,9 @@ void write_ipv4_header(vec send_buffer, uint8_t **ptr, uint32_t source_address,
   push_uint8_t(send_buffer, ptr, protocol);
   *checksum_ptr_result = *ptr;
   push_uint16_t(send_buffer, ptr, checksum);
-  uint32_t big_endian_source_address = htonl(source_address);
+  uint32_t big_endian_source_address = source_address;
   push_uint32_t(send_buffer, ptr, big_endian_source_address);
-  uint32_t big_endian_destination_address = htonl(destination_address);
+  uint32_t big_endian_destination_address = destination_address;
   push_uint32_t(send_buffer, ptr, big_endian_destination_address);
 }
 
@@ -144,7 +144,8 @@ void tcp_send_segment(tcp_stack *stack, tcp_connection *conn, uint8_t *payload,
   uint8_t *total_ip_packet_length_ptr;
   uint8_t *ip_header_checksum_ptr;
   write_ipv4_header(stack->raw_socket.send_buffer, &ptr,
-                    conn->local_socket.ipv4_addr, conn->remote_socket.ipv4_addr,
+                    conn->local_socket.network_order_ipv4_addr,
+                    conn->remote_socket.network_order_ipv4_addr,
                     &total_ip_packet_length_ptr, &ip_header_checksum_ptr);
 
   // TODO - could return this from write_ipv4_header

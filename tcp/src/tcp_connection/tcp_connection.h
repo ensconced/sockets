@@ -24,8 +24,8 @@ typedef enum tcp_connection_state {
 typedef struct tcp_connection {
   tcp_connection_state state;
   tcp_connection_mode mode;
-  tcp_socket local_socket;
-  tcp_socket remote_socket;
+  internal_tcp_socket local_socket;
+  internal_tcp_socket remote_socket;
   uint32_t send_unacknowledged;
   uint32_t send_next;
   uint32_t send_window;
@@ -39,5 +39,6 @@ typedef struct tcp_connection {
   uint32_t initial_receive_sequence_number;
 } tcp_connection;
 
-vec tcp_connection_id_create(tcp_socket local_socket, tcp_socket remote_socket);
+vec tcp_connection_id_create(internal_tcp_socket local_socket,
+                             internal_tcp_socket remote_socket);
 void tcp_connection_id_destroy(vec connection_id);

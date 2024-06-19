@@ -14,6 +14,23 @@
 #include "./tcp_connection/tcp_connection_pool.h"
 #include "./tcp_stack.h"
 #include "./utils.h"
+#include <arpa/inet.h>
+
+internal_tcp_socket internalize_socket(tcp_socket socket) {
+  internal_tcp_socket internal_socket;
+  internal_socket.network_order_port = htons(socket.port);
+  int res = inet_pton(AF_INET, socket.ipv4_addr,
+                      &internal_socket.network_order_ipv4_addr);
+  if (res == 0) {
+    fprintf(stderr, "Invalid address string\n");
+    exit(1);
+  }
+  if (res == -1) {
+    fprintf(stderr, "Invalid address family: %s\n", strerror(errno));
+    exit(1);
+  }
+  return internal_socket;
+}
 
 tcp_connection *tcp_open_passive(tcp_stack *stack, tcp_socket local_socket) {
   tcp_connection *conn = checked_malloc(sizeof(tcp_connection), "connection");
@@ -21,7 +38,7 @@ tcp_connection *tcp_open_passive(tcp_stack *stack, tcp_socket local_socket) {
   *conn = (tcp_connection){
       .mode = PASSIVE,
       .state = LISTEN,
-      .local_socket = local_socket,
+      .local_socket = internalize_socket(local_socket),
   };
 
   pthread_mutex_lock(stack->connection_pool.mutex);
@@ -36,15 +53,13 @@ tcp_connection *tcp_open_active(tcp_stack *stack, tcp_socket local_socket,
   tcp_connection *conn =
       checked_malloc(sizeof(tcp_connection), "tcp_connection");
 
-  // TODO - reinstate proper version of this...
-  uint32_t isn = 0x82588f5a;
-  // generate_isn(stack, local_socket, remote_socket);
+  uint32_t isn = generate_isn(stack, local_socket, remote_socket);
 
   *conn = (tcp_connection){
       .mode = ACTIVE,
       .state = SYN_SENT,
-      .local_socket = local_socket,
-      .remote_socket = remote_socket,
+      .local_socket = internalize_socket(local_socket),
+      .remote_socket = internalize_socket(remote_socket),
       .initial_send_sequence_number = isn,
       .send_next = isn + 1,
   };

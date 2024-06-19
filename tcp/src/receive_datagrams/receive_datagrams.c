@@ -30,6 +30,8 @@ typedef struct ip_datagram {
   vec data_in_receive_buffer;
 } ip_datagram;
 
+// TODO - some things here are network order, some are host order - figure out
+// strategy for that...
 typedef struct tcp_segment {
   uint16_t source_port;
   uint16_t dest_port;
@@ -53,15 +55,15 @@ ip_datagram parse_datagram(vec datagram_vec) {
   uint8_t header_length_in_words = version_and_header_length & 0x0F;
 
   uint8_t type_of_service = take_uint8_t(datagram_vec, &ptr);
-  uint16_t big_endian_total_length = take_uint16_t(datagram_vec, &ptr);
-  uint16_t big_endian_identification = take_uint16_t(datagram_vec, &ptr);
-  uint16_t flags_and_big_endian_fragment_offset =
+  uint16_t network_order_total_length = take_uint16_t(datagram_vec, &ptr);
+  uint16_t network_order_identification = take_uint16_t(datagram_vec, &ptr);
+  uint16_t flags_and_network_order_fragment_offset =
       take_uint16_t(datagram_vec, &ptr);
   uint8_t ttl = take_uint8_t(datagram_vec, &ptr);
   uint8_t protocol = take_uint8_t(datagram_vec, &ptr);
-  uint16_t big_endian_header_checksum = take_uint16_t(datagram_vec, &ptr);
-  uint32_t big_endian_source_address = take_uint32_t(datagram_vec, &ptr);
-  uint32_t big_endian_dest_address = take_uint32_t(datagram_vec, &ptr);
+  uint16_t network_order_header_checksum = take_uint16_t(datagram_vec, &ptr);
+  uint32_t network_order_source_address = take_uint32_t(datagram_vec, &ptr);
+  uint32_t network_order_dest_address = take_uint32_t(datagram_vec, &ptr);
 
   size_t header_length_in_bytes = header_length_in_words * 4;
   size_t options_length_in_bytes =
@@ -73,7 +75,7 @@ ip_datagram parse_datagram(vec datagram_vec) {
   ptr += options_length_in_bytes;
 
   size_t data_length_in_bytes =
-      ntohs(big_endian_total_length) - header_length_in_bytes;
+      ntohs(network_order_total_length) - header_length_in_bytes;
   vec data_in_receive_buffer = {
       .buffer = ptr,
       .len = data_length_in_bytes,
@@ -83,14 +85,15 @@ ip_datagram parse_datagram(vec datagram_vec) {
       .version = version_and_header_length >> 4,
       .internet_header_length = header_length_in_words,
       .type_of_service = type_of_service,
-      .identification = ntohs(big_endian_identification),
-      .flags = flags_and_big_endian_fragment_offset >> 13,
-      .fragment_offset = ntohs(flags_and_big_endian_fragment_offset & 0x1FFF),
+      .identification = ntohs(network_order_identification),
+      .flags = flags_and_network_order_fragment_offset >> 13,
+      .fragment_offset =
+          ntohs(flags_and_network_order_fragment_offset & 0x1FFF),
       .ttl = ttl,
       .protocol = protocol,
-      .header_checksum = ntohs(big_endian_header_checksum),
-      .source_address = ntohl(big_endian_source_address),
-      .dest_address = ntohl(big_endian_dest_address),
+      .header_checksum = ntohs(network_order_header_checksum),
+      .source_address = network_order_source_address,
+      .dest_address = network_order_dest_address,
       .options_in_receive_buffer = options_in_receive_buffer,
       .data_in_receive_buffer = data_in_receive_buffer,
   };
@@ -98,15 +101,17 @@ ip_datagram parse_datagram(vec datagram_vec) {
 
 tcp_segment parse_segment(vec segment_vec) {
   uint8_t *ptr = segment_vec.buffer;
-  uint16_t big_endian_source_port = take_uint16_t(segment_vec, &ptr);
-  uint16_t big_endian_dest_port = take_uint16_t(segment_vec, &ptr);
-  uint32_t big_endian_sequence_number = take_uint32_t(segment_vec, &ptr);
-  uint32_t big_endian_acknowledgement_number = take_uint32_t(segment_vec, &ptr);
+  uint16_t network_order_source_port = take_uint16_t(segment_vec, &ptr);
+  uint16_t network_order_dest_port = take_uint16_t(segment_vec, &ptr);
+  uint32_t network_order_sequence_number = take_uint32_t(segment_vec, &ptr);
+  uint32_t network_order_acknowledgement_number =
+      take_uint32_t(segment_vec, &ptr);
   uint8_t data_offset_and_reserved_space = take_uint8_t(segment_vec, &ptr);
   uint8_t flags = take_uint8_t(segment_vec, &ptr);
-  uint16_t big_endian_window = take_uint16_t(segment_vec, &ptr);
-  uint16_t big_endian_checksum = take_uint16_t(segment_vec, &ptr);
-  uint16_t big_endian_urgent_pointer = take_uint16_t(segment_vec, &ptr);
+  // TODO - prefix with network_order_
+  uint16_t network_order_window = take_uint16_t(segment_vec, &ptr);
+  uint16_t network_order_checksum = take_uint16_t(segment_vec, &ptr);
+  uint16_t network_order_urgent_pointer = take_uint16_t(segment_vec, &ptr);
   uint8_t *options_ptr = ptr;
   uint8_t data_offset_in_words = data_offset_and_reserved_space >> 4;
   uint8_t *data_ptr = segment_vec.buffer + data_offset_in_words * 4;
@@ -114,14 +119,14 @@ tcp_segment parse_segment(vec segment_vec) {
   size_t data_len = segment_vec.len - (size_t)(data_ptr - segment_vec.buffer);
 
   return (tcp_segment){
-      .source_port = ntohs(big_endian_source_port),
-      .dest_port = ntohs(big_endian_dest_port),
-      .sequence_number = ntohl(big_endian_sequence_number),
-      .acknowledgement_number = ntohl(big_endian_acknowledgement_number),
+      .source_port = network_order_source_port,
+      .dest_port = network_order_dest_port,
+      .sequence_number = ntohl(network_order_sequence_number),
+      .acknowledgement_number = ntohl(network_order_acknowledgement_number),
       .flags = flags,
-      .window = ntohs(big_endian_window),
-      .checksum = ntohs(big_endian_checksum),
-      .urgent_pointer = ntohs(big_endian_urgent_pointer),
+      .window = ntohs(network_order_window),
+      .checksum = ntohs(network_order_checksum),
+      .urgent_pointer = ntohs(network_order_urgent_pointer),
       .options =
           (vec){
               .buffer = options_ptr,
@@ -138,21 +143,22 @@ tcp_segment parse_segment(vec segment_vec) {
 void process_incoming_segment(tcp_stack *stack, uint32_t source_address,
                               uint32_t dest_address, tcp_segment segment) {
   pthread_mutex_lock(stack->connection_pool.mutex);
-  tcp_socket local_socket = {
-      .ipv4_addr = dest_address,
-      .port = segment.dest_port,
+  internal_tcp_socket local_socket = {
+      .network_order_ipv4_addr = dest_address,
+      .network_order_port = segment.dest_port,
   };
 
-  tcp_socket remote_socket = {
-      .ipv4_addr = source_address,
-      .port = segment.source_port,
+  internal_tcp_socket remote_socket = {
+      .network_order_ipv4_addr = source_address,
+      .network_order_port = segment.source_port,
   };
 
   tcp_connection *connection = tcp_connection_pool_find(
       stack->connection_pool, local_socket, remote_socket);
 
-  if (connection) {
-    printf("found connection, now lets process! flags: 0x%x\n", segment.flags);
+  if (connection != NULL) {
+    printf("found connection matching incoming tcp segment. now lets process "
+           "it...\n");
   }
 
   pthread_mutex_unlock(stack->connection_pool.mutex);
@@ -184,13 +190,6 @@ void *receive_datagrams(tcp_stack *stack) {
         .len = (size_t)bytes_received,
     });
 
-    // if (packet.source_address == REMOTE_IP) {
-    //   printf("remote IP: %x, src: %x, dst: %x\n", REMOTE_IP,
-    //          packet.source_address, packet.dest_address);
-    // }
-
-    // TODO - I guess this check is actually redundant, since I'm using
-    // IPPROTO_TCP when creating the raw socket?
     if (packet.protocol == IPPROTO_TCP) {
       if (verify_checksum(stack->raw_socket.receive_buffer.buffer,
                           packet.internet_header_length)) {

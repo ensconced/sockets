@@ -6,6 +6,11 @@
 #include <stdint.h>
 
 typedef struct {
-  uint32_t ipv4_addr;
+  char *ipv4_addr;
   uint16_t port;
 } tcp_socket;
+
+typedef struct {
+  uint32_t network_order_ipv4_addr;
+  uint16_t network_order_port;
+} internal_tcp_socket;
