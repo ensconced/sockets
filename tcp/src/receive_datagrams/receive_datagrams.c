@@ -30,8 +30,6 @@ typedef struct ip_datagram {
   vec data_in_receive_buffer;
 } ip_datagram;
 
-// TODO - some things here are network order, some are host order - figure out
-// strategy for that...
 typedef struct tcp_segment {
   uint16_t source_port;
   uint16_t dest_port;
@@ -47,7 +45,6 @@ typedef struct tcp_segment {
 
 // TODO - if an ip is fragmented, will the OS already have combined them by the
 // time I receive it? I think not - so I should really do it myself...
-
 ip_datagram parse_datagram(vec datagram_vec) {
   uint8_t *ptr = datagram_vec.buffer;
 

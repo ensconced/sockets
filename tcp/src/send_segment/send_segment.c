@@ -13,10 +13,7 @@
 #include "../tcp_stack.h"
 #include "../utils.h"
 
-// TODO - check how I'm meant to decide this value
 #define MAX_SEGMENT_SIZE 1024
-// TODO - I think this should be based on the size of my recieve buffer...but
-// this will do for now
 #define WINDOW 1024
 
 void write_tcp_segment(vec buffer, uint8_t **ptr, tcp_connection *conn,
@@ -28,7 +25,7 @@ void write_tcp_segment(vec buffer, uint8_t **ptr, tcp_connection *conn,
   uint32_t ack = htonl(ack_number);
   uint16_t window = htons(WINDOW);
   uint16_t checksum = 0;
-  uint16_t urgent_pointer = htons(0); // TODO
+  uint16_t urgent_pointer = htons(0);
   uint8_t max_segment_size_option_kind = 2;
   uint8_t max_segment_size_option_length = 4;
   uint16_t max_segment_size_value = htons(MAX_SEGMENT_SIZE);
@@ -109,10 +106,8 @@ void write_ipv4_header(vec send_buffer, uint8_t **ptr,
   uint8_t type_of_service = 0;
   // this gets filled in later
   uint16_t total_length = 0;
-  // TODO - this is fine as zero for now, because I'm using "Don't Fragment"
   uint16_t identification = 0;
-  // TODO - I guess this is correct if we're not using fragmentation?
-  uint16_t flags_and_fragment_offset = 0x0040; // TODO - value for debugging
+  uint16_t flags_and_fragment_offset = 0;
   uint8_t time_to_live = 0x40;
   uint8_t protocol = IPPROTO_TCP;
   uint16_t checksum = 0;
