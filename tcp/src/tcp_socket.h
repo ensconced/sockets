@@ -11,6 +11,6 @@ typedef struct {
 } tcp_socket;
 
 typedef struct {
-  uint32_t network_order_ipv4_addr;
-  uint16_t network_order_port;
+  uint32_t host_order_ipv4_addr;
+  uint16_t host_order_port;
 } internal_tcp_socket;

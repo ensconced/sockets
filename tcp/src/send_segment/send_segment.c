@@ -22,8 +22,8 @@
 void write_tcp_segment(vec buffer, uint8_t **ptr, tcp_connection *conn,
                        uint8_t *payload, size_t payload_len, uint8_t flags,
                        uint32_t seq_number, uint32_t ack_number) {
-  uint16_t source_port = conn->local_socket.network_order_port;
-  uint16_t dest_port = conn->remote_socket.network_order_port;
+  uint16_t source_port = htons(conn->local_socket.host_order_port);
+  uint16_t dest_port = htons(conn->remote_socket.host_order_port);
   uint32_t seq = htonl(seq_number);
   uint32_t ack = htonl(ack_number);
   uint16_t window = htons(WINDOW);
@@ -82,10 +82,10 @@ void write_tcp_segment(vec buffer, uint8_t **ptr, tcp_connection *conn,
   uint16_t data_len = (uint16_t)(*ptr - start);
 
   uint16_t pseudo_header[6] = {
-      conn->local_socket.network_order_ipv4_addr >> 16,
-      conn->local_socket.network_order_ipv4_addr & 0xFFFF,
-      conn->remote_socket.network_order_ipv4_addr >> 16,
-      conn->remote_socket.network_order_ipv4_addr & 0xFFFF,
+      ntohl(conn->local_socket.host_order_ipv4_addr) >> 16,
+      ntohl(conn->local_socket.host_order_ipv4_addr) & 0xFFFF,
+      ntohl(conn->remote_socket.host_order_ipv4_addr) >> 16,
+      ntohl(conn->remote_socket.host_order_ipv4_addr) & 0xFFFF,
       htons(IPPROTO_TCP),
       htons(data_len),
   };
@@ -97,8 +97,9 @@ void write_tcp_segment(vec buffer, uint8_t **ptr, tcp_connection *conn,
   memcpy(checksum_ptr, &big_endian_checksum, sizeof(big_endian_checksum));
 }
 
-void write_ipv4_header(vec send_buffer, uint8_t **ptr, uint32_t source_address,
-                       uint32_t destination_address,
+void write_ipv4_header(vec send_buffer, uint8_t **ptr,
+                       uint32_t host_order_source_address,
+                       uint32_t host_order_dest_address,
                        uint8_t **total_length_ptr_result,
                        uint8_t **checksum_ptr_result) {
   uint8_t version = 4;
@@ -127,10 +128,8 @@ void write_ipv4_header(vec send_buffer, uint8_t **ptr, uint32_t source_address,
   push_uint8_t(send_buffer, ptr, protocol);
   *checksum_ptr_result = *ptr;
   push_uint16_t(send_buffer, ptr, checksum);
-  uint32_t big_endian_source_address = source_address;
-  push_uint32_t(send_buffer, ptr, big_endian_source_address);
-  uint32_t big_endian_destination_address = destination_address;
-  push_uint32_t(send_buffer, ptr, big_endian_destination_address);
+  push_uint32_t(send_buffer, ptr, htonl(host_order_source_address));
+  push_uint32_t(send_buffer, ptr, htonl(host_order_dest_address));
 }
 
 // TODO - should we use the tcp_segment type as the param here?
@@ -144,8 +143,8 @@ void tcp_send_segment(tcp_stack *stack, tcp_connection *conn, uint8_t *payload,
   uint8_t *total_ip_packet_length_ptr;
   uint8_t *ip_header_checksum_ptr;
   write_ipv4_header(stack->raw_socket.send_buffer, &ptr,
-                    conn->local_socket.network_order_ipv4_addr,
-                    conn->remote_socket.network_order_ipv4_addr,
+                    conn->local_socket.host_order_ipv4_addr,
+                    conn->remote_socket.host_order_ipv4_addr,
                     &total_ip_packet_length_ptr, &ip_header_checksum_ptr);
 
   // TODO - could return this from write_ipv4_header

@@ -92,8 +92,8 @@ ip_datagram parse_datagram(vec datagram_vec) {
       .ttl = ttl,
       .protocol = protocol,
       .header_checksum = ntohs(network_order_header_checksum),
-      .source_address = network_order_source_address,
-      .dest_address = network_order_dest_address,
+      .source_address = ntohl(network_order_source_address),
+      .dest_address = ntohl(network_order_dest_address),
       .options_in_receive_buffer = options_in_receive_buffer,
       .data_in_receive_buffer = data_in_receive_buffer,
   };
@@ -108,7 +108,6 @@ tcp_segment parse_segment(vec segment_vec) {
       take_uint32_t(segment_vec, &ptr);
   uint8_t data_offset_and_reserved_space = take_uint8_t(segment_vec, &ptr);
   uint8_t flags = take_uint8_t(segment_vec, &ptr);
-  // TODO - prefix with network_order_
   uint16_t network_order_window = take_uint16_t(segment_vec, &ptr);
   uint16_t network_order_checksum = take_uint16_t(segment_vec, &ptr);
   uint16_t network_order_urgent_pointer = take_uint16_t(segment_vec, &ptr);
@@ -119,8 +118,8 @@ tcp_segment parse_segment(vec segment_vec) {
   size_t data_len = segment_vec.len - (size_t)(data_ptr - segment_vec.buffer);
 
   return (tcp_segment){
-      .source_port = network_order_source_port,
-      .dest_port = network_order_dest_port,
+      .source_port = ntohs(network_order_source_port),
+      .dest_port = ntohs(network_order_dest_port),
       .sequence_number = ntohl(network_order_sequence_number),
       .acknowledgement_number = ntohl(network_order_acknowledgement_number),
       .flags = flags,
@@ -144,13 +143,13 @@ void process_incoming_segment(tcp_stack *stack, uint32_t source_address,
                               uint32_t dest_address, tcp_segment segment) {
   pthread_mutex_lock(stack->connection_pool.mutex);
   internal_tcp_socket local_socket = {
-      .network_order_ipv4_addr = dest_address,
-      .network_order_port = segment.dest_port,
+      .host_order_ipv4_addr = dest_address,
+      .host_order_port = segment.dest_port,
   };
 
   internal_tcp_socket remote_socket = {
-      .network_order_ipv4_addr = source_address,
-      .network_order_port = segment.source_port,
+      .host_order_ipv4_addr = source_address,
+      .host_order_port = segment.source_port,
   };
 
   tcp_connection *connection = tcp_connection_pool_find(
@@ -172,9 +171,6 @@ bool verify_checksum(uint8_t *buffer, size_t header_length_in_32bit_words) {
 
 void *receive_datagrams(tcp_stack *stack) {
   while (!atomic_load(stack->destroyed)) {
-    // struct sockaddr_ll remote_addr;
-    // socklen_t remote_addr_len;
-    // TODO - can I just use recv instead?
     ssize_t bytes_received =
         recv(stack->raw_socket.fd, stack->raw_socket.receive_buffer.buffer,
              RAW_SOCKET_RECEIVE_BUFFER_LEN, 0);
@@ -190,15 +186,12 @@ void *receive_datagrams(tcp_stack *stack) {
         .len = (size_t)bytes_received,
     });
 
-    if (packet.protocol == IPPROTO_TCP) {
-      if (verify_checksum(stack->raw_socket.receive_buffer.buffer,
-                          packet.internet_header_length)) {
-        tcp_segment segment = parse_segment(packet.data_in_receive_buffer);
-        process_incoming_segment(stack, packet.source_address,
-                                 packet.dest_address, segment);
-      } else {
-        printf("checksum failed\n");
-      }
+    if (packet.protocol == IPPROTO_TCP &&
+        verify_checksum(stack->raw_socket.receive_buffer.buffer,
+                        packet.internet_header_length)) {
+      tcp_segment segment = parse_segment(packet.data_in_receive_buffer);
+      process_incoming_segment(stack, packet.source_address,
+                               packet.dest_address, segment);
     }
   }
   return NULL;

@@ -17,10 +17,8 @@
 #include <arpa/inet.h>
 
 internal_tcp_socket internalize_socket(tcp_socket socket) {
-  internal_tcp_socket internal_socket;
-  internal_socket.network_order_port = htons(socket.port);
-  int res = inet_pton(AF_INET, socket.ipv4_addr,
-                      &internal_socket.network_order_ipv4_addr);
+  uint32_t network_order_ipv4_addr;
+  int res = inet_pton(AF_INET, socket.ipv4_addr, &network_order_ipv4_addr);
   if (res == 0) {
     fprintf(stderr, "Invalid address string\n");
     exit(1);
@@ -29,7 +27,10 @@ internal_tcp_socket internalize_socket(tcp_socket socket) {
     fprintf(stderr, "Invalid address family: %s\n", strerror(errno));
     exit(1);
   }
-  return internal_socket;
+  return (internal_tcp_socket){
+      .host_order_port = socket.port,
+      .host_order_ipv4_addr = ntohl(network_order_ipv4_addr),
+  };
 }
 
 tcp_connection *tcp_open_passive(tcp_stack *stack, tcp_socket local_socket) {
