@@ -3,6 +3,8 @@
 #include "../lib.h"
 #include "../tcp_stack.h"
 #include "../utils.h"
+#include "./process_incoming_segment.h"
+#include "./segment.h"
 #include <arpa/inet.h>
 #include <errno.h>
 #include <linux/if_packet.h>
@@ -29,19 +31,6 @@ typedef struct ip_datagram {
   vec options_in_receive_buffer;
   vec data_in_receive_buffer;
 } ip_datagram;
-
-typedef struct tcp_segment {
-  uint16_t source_port;
-  uint16_t dest_port;
-  uint32_t sequence_number;
-  uint32_t acknowledgement_number;
-  uint8_t flags;
-  uint16_t window;
-  uint16_t checksum;
-  uint16_t urgent_pointer;
-  vec options;
-  vec data;
-} tcp_segment;
 
 // TODO - if an ip is fragmented, will the OS already have combined them by the
 // time I receive it? I think not - so I should really do it myself...
@@ -136,30 +125,6 @@ tcp_segment parse_segment(vec segment_vec) {
   };
 }
 
-void process_incoming_segment(tcp_stack *stack, uint32_t source_address,
-                              uint32_t dest_address, tcp_segment segment) {
-  pthread_mutex_lock(stack->connection_pool.mutex);
-  internal_tcp_socket local_socket = {
-      .host_order_ipv4_addr = dest_address,
-      .host_order_port = segment.dest_port,
-  };
-
-  internal_tcp_socket remote_socket = {
-      .host_order_ipv4_addr = source_address,
-      .host_order_port = segment.source_port,
-  };
-
-  tcp_connection *connection = tcp_connection_pool_find(
-      stack->connection_pool, local_socket, remote_socket);
-
-  if (connection != NULL) {
-    printf("found connection matching incoming tcp segment. now lets process "
-           "it...\n");
-  }
-
-  pthread_mutex_unlock(stack->connection_pool.mutex);
-}
-
 bool verify_checksum(uint8_t *buffer, size_t header_length_in_32bit_words) {
   uint32_t csum = 0;
   checksum_update(&csum, buffer, header_length_in_32bit_words * 4);
@@ -193,76 +158,3 @@ void *receive_datagrams(tcp_stack *stack) {
   }
   return NULL;
 }
-
-// typedef enum {
-//   SYN,
-//   ACK,
-//   FIN,
-// } ip_datagram_type;
-
-// typedef struct {
-//   ip_datagram_type type;
-// } ip_datagram;
-
-// // 1. main thread: handles user actions
-// // 2. packet processing thread: accepts and processes incoming packets.
-// //    - continually takes packet as they arrive (this will be blocking).
-// //    - if the packet matches an open connection:
-// //      - if there is a receive request waiting, send the payload to that
-// //      - else, push it to a big buffer so be used if a receive action occurs
-// //    - else, discard it? or whatever the spec says to do...
-// // 3. timeout processing thread: handles timeouts
-// // each one needs to hold the mutex for the connections array to do anything
-// // with any of the connections...
-
-// ip_datagram take_ip_datagram(void) {
-//   // TODO - I guess here take any datagrams tagged as being for the TCP
-//   // protocol?
-// }
-
-// void process_syn(ip_datagram datagram, connection *connection) {
-//   // TODO
-// }
-
-// void process_ack(ip_datagram datagram, connection *connection) {
-//   // TODO
-// }
-
-// void process_fin(ip_datagram datagram, connection *connection) {
-//   // TODO
-// }
-
-// connection *find_datagram_connection(ip_datagram datagram) {
-//   // TODO
-//   // A natural way to think about processing incoming segments is to imagine
-//   // that they are first tested for proper sequence number (i.e., that their
-//   // contents lie in the range of the expected "receive window" in the
-//   sequence
-//   // number space) and then that they are generally queued and processed in
-//   // sequence number order.
-// }
-
-// void process_datagram(ip_datagram datagram, connection *connections) {
-//   connection *conn = find_datagram_connection();
-//   switch (datagram.type) {
-//   case SYN: {
-//     process_syn(datagram, conn);
-//     break;
-//   }
-//   case ACK: {
-//     process_ack(datagram, conn);
-//     break;
-//   }
-//   case FIN: {
-//     process_fin(datagram, conn);
-//     break;
-//   }
-//   }
-// }
-
-// void handle_incoming_datagrams(connection *connections) {
-//   while (1) {
-//     ip_datagram datagram = take_ip_datagram();
-//     process_datagram(datagram, connections);
-//   }
-// }

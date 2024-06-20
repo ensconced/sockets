@@ -7,6 +7,7 @@
 #include <string.h>
 #include <sys/socket.h>
 
+#include "./constants.h"
 #include "./error_handling/error_handling.h"
 #include "./isn_generation/generate_isn.h"
 #include "./lib.h"
