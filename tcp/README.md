@@ -5,7 +5,8 @@ This is an implementation of the Transmission Control Protocol. Eventually I int
 ## Threading
 
 Main thread
-- user action functions are called e.g. OPEN, SEND, RECEIVE, CLOSE, STATUS, ABORT, FLUSH
+- listens for user actions are called e.g. OPEN, SEND, RECEIVE, CLOSE, STATUS, ABORT, FLUSH
+  (for now the user actions are simply function calls within a main fn, but eventually this will become a daemon, accepting input from a cli?)
 
 Receive thread
 - raw sockets are read from...
@@ -14,7 +15,6 @@ Timeout thread
 - tracks timeouts
 
 Note that the state machines of the individual connections can be mutated by all three of the threads. The handling of certain actions/events may also result in the connection pool hashmap being mutated. We have a mutex on the connection pool which must be held while using (reading or writing) the connection pool in any way, including the individual connection state machines, or the connection pool hashmap.
-Do I need another mutex on the raw socket pool??
 
 # Configuration
 

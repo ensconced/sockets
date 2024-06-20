@@ -164,7 +164,8 @@ void tcp_send_segment(tcp_stack *stack, tcp_connection *conn, uint8_t *payload,
 
   //  TODO - this could just be created once and kept on the tcp connection
   //  object?
-  // TODO - what if there are multiple? re-read `man packet`!
+  // TODO - what if there are multiple interfaces - I want to use whichever one
+  // corresponds to the specified ip address. re-read `man packet`!
   unsigned int interface_index = if_nametoindex("enp1s0");
   if (interface_index == 0) {
     fprintf(stderr, "Failed to find interface index: %s\n", strerror(errno));
@@ -173,7 +174,7 @@ void tcp_send_segment(tcp_stack *stack, tcp_connection *conn, uint8_t *payload,
 
   struct sockaddr_ll dest_addr = {
       .sll_family = AF_PACKET,
-      .sll_addr = {0xe4, 0x5f, 0x01, 0x77, 0x76, 0x38, 0x00, 0x00}, // rpi2
+      .sll_addr = {0x48, 0x5d, 0x35, 0x12, 0x84, 0xf4, 0x00, 0x00}, // fritz box
       .sll_halen = ETH_ALEN,
       .sll_ifindex = (int)interface_index,
       .sll_protocol = htons(ETH_P_IP),
