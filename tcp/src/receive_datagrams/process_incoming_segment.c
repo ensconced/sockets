@@ -1,5 +1,6 @@
 #include "../constants.h"
 #include "../lib.h"
+#include "../send_segment/send_segment.h"
 #include "../tcp_stack.h"
 #include "./segment.h"
 
@@ -65,10 +66,20 @@ void process_incoming_segment(tcp_stack *stack, uint32_t source_address,
     switch (connection->state) {
     case SYN_SENT: {
       if ((segment.flags & SYN) && (segment.flags & ACK)) {
-        printf("received SYN ACK\n");
+        printf("received SYN/ACK\n");
+        // TODO - this function signature is a bit awkward
+        tcp_send_segment(stack, connection, NULL, 0, ACK, 0, 0);
+        connection->state = ESTABLISHED;
       }
+      break;
+    }
+    case ESTABLISHED: {
+      char *data = (char *)segment.data.buffer;
+      printf("omg actual data? %s\n", data);
+      break;
     }
     default: {
+      printf("unexpected segment...\n");
     }
     }
   }
