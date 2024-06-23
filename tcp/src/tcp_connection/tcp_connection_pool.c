@@ -61,12 +61,14 @@ void tcp_connection_pool_free_all_connections(
   hash_map_iterator *not_listen_state_iter = hash_map_iterator_create(
       connection_pool->connections_not_in_listen_state);
 
-  tcp_connection *conn;
-  while ((conn = hash_map_iterator_take(listen_state_iter)) != NULL) {
-    free(conn);
+  buffer_entry *entry;
+  while ((entry = hash_map_iterator_take(listen_state_iter)) != NULL) {
+    free(entry->key);
+    free(entry->value);
   }
-  while ((conn = hash_map_iterator_take(not_listen_state_iter)) != NULL) {
-    free(conn);
+  while ((entry = hash_map_iterator_take(not_listen_state_iter)) != NULL) {
+    free(entry->key);
+    free(entry->value);
   }
   hash_map_iterator_destroy(listen_state_iter);
   hash_map_iterator_destroy(not_listen_state_iter);

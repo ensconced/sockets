@@ -63,12 +63,16 @@ void process_incoming_segment(tcp_stack *stack, uint32_t source_address,
       stack->connection_pool, local_socket, remote_socket);
 
   if (connection != NULL) {
+    printf("found connection??\n");
     switch (connection->state) {
     case SYN_SENT: {
       if ((segment.flags & SYN) && (segment.flags & ACK)) {
         printf("received SYN/ACK\n");
         // TODO - this function signature is a bit awkward
-        tcp_send_segment(stack, connection, NULL, 0, ACK, 0, 0);
+        tcp_send_segment(stack, connection, (uint8_t *)"GET / HTTP/1.1\n\n",
+                         strlen("GET / HTTP/1.1\n\n"), ACK,
+                         connection->initial_send_sequence_number + 1,
+                         segment.sequence_number + 1);
         connection->state = ESTABLISHED;
       }
       break;

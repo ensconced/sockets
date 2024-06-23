@@ -58,7 +58,7 @@ systemctl restart networking
 
 # Block the operating system from handling any traffic on the secondary IP address.
 # We want to handle that traffic with our custom TCP implemenation instead!
-iptables -A INPUT -p tcp -d 192.168.178.202 -j DROP
+iptables -A INPUT -p tcp -d 192.168.178.201 -j DROP
 
 # The iptables rules are just kept in memory. To get them to persist over reboots, we'll create a systemd service.
 # First, write your rules to a file.

@@ -76,6 +76,8 @@ tcp_connection *tcp_open_active(tcp_stack *stack, tcp_socket local_socket,
   return conn;
 }
 
-void tcp_send(tcp_connection *conn, void *data, uint32_t data_size) {
-  // TODO
+void tcp_send(tcp_stack *stack, tcp_connection *conn, void *data,
+              size_t data_size) {
+  tcp_send_segment(stack, conn, data, data_size, 0,
+                   conn->initial_send_sequence_number + 2, 0);
 }

@@ -1,3 +1,4 @@
+#include "./hash_map.h"
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -11,20 +12,6 @@
 #define FNV_OFFSET_BASIS 0x811c9dc5
 #define INITIAL_BUFFER_LEN 32
 #define MAX_LOAD_FACTOR 0.5
-
-typedef enum buffer_entry_type {
-  // empty has to be zero so that we can use calloc to initialise the buffer
-  empty,
-  occupied,
-  tombstone,
-} buffer_entry_type;
-
-typedef struct buffer_entry {
-  buffer_entry_type type;
-  void *key;
-  size_t key_len;
-  void *value;
-} buffer_entry;
 
 typedef struct hash_map {
   buffer_entry *buffer;
@@ -166,14 +153,15 @@ void hash_map_delete(hash_map *hm, void *key, size_t key_len) {
   entry->type = tombstone;
 }
 
-void *hash_map_iterator_take(hash_map_iterator *iterator) {
+// TODO - probably shouldn't exposure buffer_entry type...
+buffer_entry *hash_map_iterator_take(hash_map_iterator *iterator) {
   while (iterator->idx < iterator->hm->buffer_len &&
          iterator->hm->buffer[iterator->idx].type != occupied) {
     iterator->idx++;
   }
-  return iterator->idx == iterator->hm->buffer_len
-             ? NULL
-             : iterator->hm->buffer[iterator->idx++].value;
+  if (iterator->idx == iterator->hm->buffer_len)
+    return NULL;
+  return &iterator->hm->buffer[iterator->idx++];
 }
 
 hash_map_iterator *hash_map_iterator_create(hash_map *hm) {
