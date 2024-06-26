@@ -9,6 +9,7 @@
 
 #include "../checksum/checksum.h"
 #include "../config.h"
+#include "../constants.h"
 #include "../tcp_connection/tcp_connection.h"
 #include "../tcp_stack.h"
 #include "../utils.h"
@@ -52,9 +53,11 @@ void write_tcp_segment(vec buffer, uint8_t **ptr, tcp_connection *conn,
   push_uint16_t(buffer, ptr, checksum);
   push_uint16_t(buffer, ptr, urgent_pointer);
 
-  push_uint8_t(buffer, ptr, max_segment_size_option_kind);
-  push_uint8_t(buffer, ptr, max_segment_size_option_length);
-  push_uint16_t(buffer, ptr, max_segment_size_value);
+  if (flags & SYN) {
+    push_uint8_t(buffer, ptr, max_segment_size_option_kind);
+    push_uint8_t(buffer, ptr, max_segment_size_option_length);
+    push_uint16_t(buffer, ptr, max_segment_size_value);
+  }
   // pad out options until they reach a 32bit word boundary
   while ((*ptr - start) % 4) {
     push_uint8_t(buffer, ptr, end_of_option_list);
@@ -128,6 +131,7 @@ void write_ipv4_header(vec send_buffer, uint8_t **ptr,
 }
 
 // TODO - should we use the tcp_segment type as the param here?
+// TODO - seq number should be based on connection...
 void tcp_send_segment(tcp_stack *stack, tcp_connection *conn, uint8_t *payload,
                       size_t payload_len, uint8_t flags, uint32_t seq_number,
                       uint32_t ack_number) {
