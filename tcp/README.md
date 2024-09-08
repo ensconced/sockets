@@ -1,17 +1,20 @@
 # Design Notes
 
-This is an implementation of the Transmission Control Protocol. Eventually I intend to write an entire network stack from the ground up, but this incarnation depends on the implemenation of the Internet Protocol that comes built-in to linux.
+This is an implementation of TCP/IP.
 
 ## Threading
 
 Main thread
+
 - listens for user actions are called e.g. OPEN, SEND, RECEIVE, CLOSE, STATUS, ABORT, FLUSH
   (for now the user actions are simply function calls within a main fn, but eventually this will become a daemon, accepting input from a cli?)
 
 Receive thread
+
 - raw sockets are read from...
 
 Timeout thread
+
 - tracks timeouts
 
 Note that the state machines of the individual connections can be mutated by all three of the threads. The handling of certain actions/events may also result in the connection pool hashmap being mutated. We have a mutex on the connection pool which must be held while using (reading or writing) the connection pool in any way, including the individual connection state machines, or the connection pool hashmap.
@@ -29,25 +32,24 @@ This could be resolved by limiting the custom TCP implementation to a subset of 
 # local DHCP server is configured to assign to devices on your network. You'll need to run this as root.
 echo 'source /etc/network/interfaces.d/*
 
+source /etc/network/interfaces.d/*
+
 # The loopback network interface
 auto lo
 iface lo inet loopback
 
 # The primary network interface.
-auto enp2s0
-iface enp2s0 inet static
-    address 192.168.178.201
-    netmask 255.255.255.0
-    gateway 192.168.178.1
+auto enp1s0
+iface enp1s0 inet static
+    address 192.168.111.222/24
+    gateway 192.168.111.1
 
 # Secondary network interface - used by my custom TCP implementation. We'll set up iptables
 # to block any traffic incoming on this address, so that it's exclusively handled by our
 # custom TCP implementation.
-auto enp2s0:0
-iface enp2s0:0 inet static
-    address 192.168.178.202
-    netmask 255.255.255.0
-    gateway 192.168.178.1' > /etc/network/interfaces
+iface enp1s0 inet static
+    address 192.168.111.221/24
+    gateway 192.168.111.1
 ```
 
 Normally, your primary address would probably be configured to be set up by DHCP, but in my experience this does not combine well with the secondary address being static; if one address is configured by DHCP and one is static, then most tools (e.g. curl, ping, and probably most other programs that involve any networking) will prefer to use the static one. In our case though, that would be the opposite of what we want; we want everything except our custom TCP implementation to use the primary address. Using static addresses in both cases simplifies this.
@@ -58,7 +60,7 @@ systemctl restart networking
 
 # Block the operating system from handling any traffic on the secondary IP address.
 # We want to handle that traffic with our custom TCP implemenation instead!
-iptables -A INPUT -p tcp -d 192.168.178.201 -j DROP
+iptables -A INPUT -p tcp -d 192.168.111.221 -j DROP
 
 # The iptables rules are just kept in memory. To get them to persist over reboots, we'll create a systemd service.
 # First, write your rules to a file.
