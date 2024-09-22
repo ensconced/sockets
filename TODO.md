@@ -1,5 +1,7 @@
 # TODO
 
+- see if I can connect to cloudflare...
+- get tests passing
 - check checksums using wireshark validation
 - WHY am I not getting a SYN/ACK back?
 - debug - not finding SYN ACK - try wireshark alongside lldb?...

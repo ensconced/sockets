@@ -69,15 +69,17 @@ tcp_connection *tcp_open_active(tcp_stack *stack, tcp_socket local_socket,
   pthread_mutex_lock(stack->connection_pool.mutex);
 
   tcp_connection_pool_add(stack->connection_pool, conn);
-  tcp_send_segment(stack, conn, NULL, 0, SYN, isn, 0);
+  tcp_send_segment(stack, conn, NULL, 0, SYN);
   conn->state = SYN_SENT;
 
   pthread_mutex_unlock(stack->connection_pool.mutex);
   return conn;
 }
 
+// eventually this will just push some data onto a buffer, to eventually be sent
+// by the underlying implementation, which will support re-sending etc. but for
+// now, it literally just sends the segment.
 void tcp_send(tcp_stack *stack, tcp_connection *conn, void *data,
               size_t data_size) {
-  tcp_send_segment(stack, conn, data, data_size, 0,
-                   conn->initial_send_sequence_number + 1, 0);
+  tcp_send_segment(stack, conn, data, data_size, ACK);
 }

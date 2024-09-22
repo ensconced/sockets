@@ -63,15 +63,15 @@ void process_incoming_segment(tcp_stack *stack, uint32_t source_address,
       stack->connection_pool, local_socket, remote_socket);
 
   if (connection != NULL) {
-    printf("found connection??\n");
+    // TODO - for now we're just assuming that we already have all the preceding
+    // segments - i.e. there are no gaps.
+    connection->receive_next = segment.sequence_number + 1;
+
     switch (connection->state) {
     case SYN_SENT: {
       if ((segment.flags & SYN) && (segment.flags & ACK)) {
         printf("received SYN/ACK\n");
-        // TODO - this function signature is a bit awkward
-        tcp_send_segment(stack, connection, NULL, 0, ACK,
-                         connection->initial_send_sequence_number + 1,
-                         segment.sequence_number + 1);
+        tcp_send_segment(stack, connection, NULL, 0, ACK);
         connection->state = ESTABLISHED;
       }
       break;

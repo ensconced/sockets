@@ -130,11 +130,20 @@ void write_ipv4_header(vec send_buffer, uint8_t **ptr,
   push_uint32_t(send_buffer, ptr, htonl(host_order_dest_address));
 }
 
+uint32_t logical_segment_length(size_t payload_len, uint8_t flags) {
+  uint32_t result = (uint32_t)payload_len;
+  if (flags & SYN) {
+    result++;
+  }
+  if (flags & FIN) {
+    result++;
+  }
+  return result;
+}
+
 // TODO - should we use the tcp_segment type as the param here?
-// TODO - seq number should be based on connection...
 void tcp_send_segment(tcp_stack *stack, tcp_connection *conn, uint8_t *payload,
-                      size_t payload_len, uint8_t flags, uint32_t seq_number,
-                      uint32_t ack_number) {
+                      size_t payload_len, uint8_t flags) {
   pthread_mutex_lock(stack->raw_socket.mutex);
 
   uint8_t *ptr = stack->raw_socket.send_buffer.buffer;
@@ -150,6 +159,8 @@ void tcp_send_segment(tcp_stack *stack, tcp_connection *conn, uint8_t *payload,
   uint16_t total_ip_header_length =
       (uint16_t)(ptr - stack->raw_socket.send_buffer.buffer);
 
+  uint32_t seq_number = conn->send_next;
+  uint32_t ack_number = conn->receive_next;
   write_tcp_segment(stack->raw_socket.send_buffer, &ptr, conn, payload,
                     payload_len, flags, seq_number, ack_number);
 
@@ -189,6 +200,8 @@ void tcp_send_segment(tcp_stack *stack, tcp_connection *conn, uint8_t *payload,
              sizeof(dest_addr)) == -1) {
     fprintf(stderr, "Failed to send IP packet: %s\n", strerror(errno));
   };
+
+  conn->send_next += logical_segment_length(payload_len, flags);
 
   pthread_mutex_unlock(stack->raw_socket.mutex);
 }
