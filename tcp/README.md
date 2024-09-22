@@ -18,6 +18,7 @@ Timeout thread
 - tracks timeouts
 
 Note that the state machines of the individual connections can be mutated by all three of the threads. The handling of certain actions/events may also result in the connection pool hashmap being mutated. We have a mutex on the connection pool which must be held while using (reading or writing) the connection pool in any way, including the individual connection state machines, or the connection pool hashmap.
+There is also a mutex on the raw socket.
 
 # Configuration
 

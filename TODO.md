@@ -1,5 +1,15 @@
 # TODO
 
+- re-architect to simplify multithreading approach
+
+In the new setup, basically all the work will be done by the main thread.
+There are other helper threads, but all these do is push items onto the event queue.
+There is only a single mutex required - to protect the event queue.
+The main thread then...hmm...spinlocks? to wait for things to appear on the event queue? not sure how that should work...
+No need for a spinlock - I should be able to use pthread_cond_wait & pthread_cond_signal
+
+
+
 - resolve hacks in main.c
   - write handle_user_call
   - tcp_send should dispatch "SEND" action
@@ -29,7 +39,7 @@ take_data(max_size)
   (until the queue is empty)
 
 should there be a separate thread for sending from the queue? which thread owns the queue?
-will it need a mutex?
+will it need a mutex? I think not - we'll just use the connection pool mutex.
 
 
 
