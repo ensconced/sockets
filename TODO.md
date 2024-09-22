@@ -1,6 +1,46 @@
 # TODO
 
-- see if I can connect to cloudflare...
+- resolve hacks in main.c
+  - write handle_user_call
+  - tcp_send should dispatch "SEND" action
+  - "SEND" action should be handled as per RFC 9293
+
+- buffered sending
+
+- the "SEND" action isn't for sending "a segment"!
+- rather, it's for sending "some bytes"!
+- so I think all we really need in terms of the send buffer, is...well...a buffer
+- what shall we call it? how about the "transmission queue"??
+- so...I think my first task is to implement this transmission queue
+
+What does the transmission queue consist of?
+
+Basically just a buffer, with some max length.
+I guess this will be attached to the tcp_connection struct?
+
+What associated methods are there?
+
+queue_for_transmission(bytes)
+take_data(max_size)
+
+?
+
+- once connection is established, should do take_data, and send that data...
+  (until the queue is empty)
+
+should there be a separate thread for sending from the queue? which thread owns the queue?
+will it need a mutex?
+
+
+
+
+
+
+
+
+
+
+
 - get tests passing
 - check checksums using wireshark validation
 - WHY am I not getting a SYN/ACK back?

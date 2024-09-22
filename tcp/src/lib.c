@@ -76,9 +76,9 @@ tcp_connection *tcp_open_active(tcp_stack *stack, tcp_socket local_socket,
   return conn;
 }
 
-// eventually this will just push some data onto a buffer, to eventually be sent
-// by the underlying implementation, which will support re-sending etc. but for
-// now, it literally just sends the segment.
+// TODO - eventually this will just push some data onto a buffer, to eventually
+// be sent by the underlying implementation, which will support re-sending etc.
+// but for now, it literally just sends the segment.
 void tcp_send(tcp_stack *stack, tcp_connection *conn, void *data,
               size_t data_size) {
   tcp_send_segment(stack, conn, data, data_size, ACK);
