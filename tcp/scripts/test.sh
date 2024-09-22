@@ -52,7 +52,7 @@ trap cleanup 'EXIT'
 tmp_file=$(mktemp)
 
 echo "starting sniffer"
-tshark -i any -f 'tcp and (port 3000 or port 3001)' -a 'duration:5' -T json > "$tmp_file" &
+tshark -i any -f 'tcp and (port 3000 or port 3001)' -a 'duration:5' -T json >"$tmp_file" &
 sniffer_pid=$!
 
 echo "starting test server"
@@ -65,7 +65,7 @@ my_server_pid=$!
 
 wait "$sniffer_pid"
 
-# First, we expect to see a SYN being sent from my server
+# First, we expect to see a SYN being sent to my server
 packet_1=$(cat "$tmp_file" | jq '.[0]._source.layers.tcp')
 assert_packet_field "$packet_1" "[\"tcp.srcport\"]" "3001"
 assert_packet_field "$packet_1" "[\"tcp.dstport\"]" "3000"
