@@ -1,5 +1,10 @@
 # TODO
 
+- finish implementing queue functions
+- add testing for queue functions
+- make queue functions threadsafe
+- test thread safety?
+
 - re-architect to simplify multithreading approach
 
 In the new setup, basically all the work will be done by the main thread.
