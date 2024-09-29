@@ -1,10 +1,13 @@
 #pragma once
 
-#include "./lib.h"
+#include "./mpsc_queue/mpsc_queue.h"
 #include "./tcp_connection/tcp_connection_pool.h"
 #include <openssl/evp.h>
 #include <pthread.h>
 #include <stdatomic.h>
+
+void tcp_stack_create(void);
+void tcp_stack_destroy(tcp_stack *stack);
 
 typedef struct tcp_raw_socket {
   int fd;
@@ -23,4 +26,5 @@ typedef struct tcp_stack {
   tcp_connection_pool connection_pool;
   tcp_raw_socket raw_socket;
   EVP_MD *md5_algorithm;
+  mpsc_queue *event_queue;
 } tcp_stack;

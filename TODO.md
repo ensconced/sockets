@@ -1,15 +1,21 @@
 # TODO
 
+- update Makefile to output binary as jc
+- make entrypoint of binary into a CLI which takes different subcommands:
+  - no subcommand - quit with help info
+  - `start` - spins up the tcp stack, running as a daemon
+  - `connect` - takes arguments for port and ip address, does active OPEN then sends data from stdin once connection is established
+  - `serve` - to open a passive connection (don't implement yet)
+
+- get e2e test against cloudflare working
+- abolish lib.c (this isn't a lib any more, it's a CLI binary, which depending on the args either starts a daemon, or sends commands to an existing daemon)
+- abolish `make serve` (or just rename to `make run` maybe?)
 - re-architect to use new queue approach for simplification of multithreading approach
-- remove all redundant mutexes
+- remove all redundant mutexes (I think the only one we need now is the on the event queue)
+
 
 In the new setup, basically all the work will be done by the main thread.
 There are other helper threads, but all these do is push items onto the event queue.
-There is only a single mutex required - to protect the event queue.
-The main thread then...hmm...spinlocks? to wait for things to appear on the event queue? not sure how that should work...
-No need for a spinlock - I should be able to use pthread_cond_wait & pthread_cond_signal
-
-
 
 - resolve hacks in main.c
   - write handle_user_call

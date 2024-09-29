@@ -1,6 +1,7 @@
 #include "./tcp_stack.h"
 #include "./config.h"
 #include "./error_handling/error_handling.h"
+#include "./process_event/process_event.h"
 #include "./receive_datagrams/receive_datagrams.h"
 #include "./tcp_connection/tcp_connection_pool.h"
 #include <errno.h>
@@ -68,7 +69,7 @@ void tcp_raw_socket_destroy(tcp_raw_socket *raw_socket) {
   free(raw_socket->mutex);
 }
 
-tcp_stack *tcp_stack_create(void) {
+void tcp_stack_create(void) {
   EVP_MD *md5_algorithm = EVP_MD_fetch(NULL, "MD5", "provider=default");
   if (md5_algorithm == NULL) {
     fprintf(stderr, "Failed to fetch md5 algorithm\n");
@@ -79,12 +80,15 @@ tcp_stack *tcp_stack_create(void) {
       checked_malloc(sizeof(atomic_bool), "destroyed flag");
   atomic_init(destroyed, false);
 
+  mpsc_queue *event_queue = mpsc_queue_create();
+
   tcp_stack *stack = checked_malloc(sizeof(tcp_stack), "tcp_stack");
   *stack = (tcp_stack){
       .connection_pool = tcp_connection_pool_create(),
       .raw_socket = tcp_raw_socket_create(),
       .md5_algorithm = md5_algorithm,
       .destroyed = destroyed,
+      .event_queue = event_queue,
   };
 
   if (pthread_create(&stack->incoming_datagram_handler_thread, NULL,
@@ -100,7 +104,10 @@ tcp_stack *tcp_stack_create(void) {
   //   exit(1);
   // };
 
-  return stack;
+  while (!atomic_load(stack->destroyed)) {
+    void *event = mpsc_queue_dequeue(event_queue);
+    process_event(stack, event);
+  }
 }
 
 void tcp_stack_destroy(tcp_stack *stack) {
