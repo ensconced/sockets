@@ -1,15 +1,3 @@
-#pragma once
-
-#include <stdbool.h>
-
-/*
-This queue is threadsafe provided it is used in a "single-consumer, multiple
-producer" manner. i.e. `event_queue_enqueue` can be called by many
-different threads, but `event_queue_dequeue` must only be called from a single
-thread.
-*/
-typedef struct event_queue event_queue;
-
 typedef enum event_type {
   EVENT_OPEN,
   EVENT_SEND,
@@ -58,11 +46,3 @@ typedef struct event {
   //   event_timeout_details timeout;
   // } details;
 } event;
-
-event_queue *event_queue_create(void);
-
-void event_queue_destroy(event_queue *q);
-
-void event_queue_enqueue(event_queue *q, event evt);
-
-event event_queue_dequeue(event_queue *q);

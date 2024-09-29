@@ -1,6 +1,5 @@
 # TODO
 
-- test thread safety of event queue
 - re-architect to use new queue approach for simplification of multithreading approach
 - remove all redundant mutexes
 
