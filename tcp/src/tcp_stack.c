@@ -25,9 +25,9 @@ tcp_raw_socket tcp_raw_socket_create(void) {
   }
   pthread_mutex_t *socket_mutex =
       checked_malloc(sizeof(pthread_mutex_t), "socket mutex");
-  int mutex_init_result = pthread_mutex_init(socket_mutex, NULL);
-  if (mutex_init_result != 0) {
-    fprintf(stderr, "Failed to init mutex: %s\n", strerror(mutex_init_result));
+  int mutex_init_error = pthread_mutex_init(socket_mutex, NULL);
+  if (mutex_init_error) {
+    fprintf(stderr, "Failed to init mutex: %s\n", strerror(mutex_init_error));
     exit(1);
   };
   uint8_t *socket_send_buffer = checked_malloc(

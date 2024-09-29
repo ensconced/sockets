@@ -1,7 +1,13 @@
 #pragma once
 
-#include "stdbool.h"
+#include <stdbool.h>
 
+/*
+This queue is threadsafe provided it is used in a "single-consumer, multiple
+producer" manner. i.e. `event_queue_enqueue` can be called by many
+different threads, but `event_queue_dequeue` must only be called from a single
+thread.
+*/
 typedef struct event_queue event_queue;
 
 typedef enum event_type {
@@ -59,4 +65,4 @@ void event_queue_destroy(event_queue *q);
 
 void event_queue_enqueue(event_queue *q, event evt);
 
-bool event_queue_dequeue(event_queue *q, event *evt_result);
+event event_queue_dequeue(event_queue *q);

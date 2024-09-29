@@ -1,7 +1,6 @@
 # TODO
 
-- make queue functions threadsafe using pthread_cond_wait
-- test thread safety?
+- test thread safety of event queue
 - re-architect to use new queue approach for simplification of multithreading approach
 - remove all redundant mutexes
 
