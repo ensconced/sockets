@@ -82,8 +82,9 @@ void hash_map_test_iteration(void) {
       checked_malloc(count * sizeof(uint32_t), "iterator_values");
   hash_map_iterator *iterator = hash_map_iterator_create(hm);
 
-  uint32_t *val;
-  while ((val = hash_map_iterator_take(iterator)) != NULL) {
+  buffer_entry *entry;
+  while ((entry = hash_map_iterator_take(iterator)) != NULL) {
+    uint32_t *val = (uint32_t *)(entry->value);
     iterator_values[*val / 2] = *val;
   }
   assert(memcmp(values, iterator_values, count * sizeof(uint32_t)) == 0);

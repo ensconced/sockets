@@ -8,7 +8,7 @@ TEST_FILES = $(shell find . -name '*.test.c')
 SERVER_BINARY = $(BIN_DIR)/serve
 TEST_BINARY = $(BIN_DIR)/test
 
-.PHONY: test serve clean
+.PHONY: serve unit-test e2e-test clean
 
 $(SECRET_KEY_FILE):
 	echo "// This is an generated file and should not be edited directly!" > $(SECRET_KEY_FILE)
@@ -23,13 +23,16 @@ $(SERVER_BINARY): $(COMMON_SRC_FILES) $(HEADER_FILES) $(SECRET_KEY_FILE) $(MAIN_
 $(TEST_BINARY): $(COMMON_SRC_FILES) $(HEADER_FILES) $(SECRET_KEY_FILE) $(TEST_FILES) | $(BIN_DIR)
 	$(CC) $(CFLAGS) -o $(TEST_BINARY) $(COMMON_SRC_FILES) $(SECRET_KEY_FILE) $(TEST_FILES)
 
-test: $(TEST_BINARY) $(SERVER_BINARY)
-	MallocNanoZone=0 $(TEST_BINARY) && ./scripts/test.sh && echo "tests passed :)"
-
 serve: $(SERVER_BINARY)
 	# disable MallocNanoZone as a fix for this issue on macOS
 	# https://stackoverflow.com/questions/69861144/get-an-error-as-a-out40780-0x1130af600-malloc-nano-zone-abandoned-due-to-in
 	MallocNanoZone=0 $(SERVER_BINARY)
+
+unit-test: $(TEST_BINARY) $(SERVER_BINARY)
+	MallocNanoZone=0 $(TEST_BINARY)
+
+e2e-test:
+	./scripts/test.sh && echo "tests passed :)"
 
 clean:
 	rm -rf bin $(SECRET_KEY_FILE)
