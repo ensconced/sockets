@@ -1,11 +1,9 @@
 # TODO
 
-- finish implementing queue functions
-- add testing for queue functions
-- make queue functions threadsafe
+- make queue functions threadsafe using pthread_cond_wait
 - test thread safety?
-
-- re-architect to simplify multithreading approach
+- re-architect to use new queue approach for simplification of multithreading approach
+- remove all redundant mutexes
 
 In the new setup, basically all the work will be done by the main thread.
 There are other helper threads, but all these do is push items onto the event queue.
