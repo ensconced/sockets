@@ -1,5 +1,4 @@
 #include "../constants.h"
-#include "../lib.h"
 #include "../send_segment/send_segment.h"
 #include "../tcp_stack.h"
 #include "./segment.h"

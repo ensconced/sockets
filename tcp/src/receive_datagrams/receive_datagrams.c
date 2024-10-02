@@ -1,6 +1,5 @@
 #include "../checksum/checksum.h"
 #include "../config.h"
-#include "../lib.h"
 #include "../tcp_stack.h"
 #include "../utils.h"
 #include "./process_incoming_segment.h"

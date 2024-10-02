@@ -6,9 +6,6 @@
 #include <pthread.h>
 #include <stdatomic.h>
 
-void tcp_stack_create(void);
-void tcp_stack_destroy(tcp_stack *stack);
-
 typedef struct tcp_raw_socket {
   int fd;
   vec send_buffer;
@@ -28,3 +25,6 @@ typedef struct tcp_stack {
   EVP_MD *md5_algorithm;
   mpsc_queue *event_queue;
 } tcp_stack;
+
+void tcp_stack_create(void);
+void tcp_stack_destroy(tcp_stack *stack);

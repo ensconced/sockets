@@ -1,11 +1,10 @@
-#include "../lib.h"
+#include "../config.h"
 #include "../tcp_stack.h"
 #include "./md5/md5.h"
 #include "./secret_key/secret_key.h"
 #include <errno.h>
 #include <stdint.h>
 #include <string.h>
-#include <time.h>
 
 uint32_t generate_isn(tcp_stack *stack, internal_tcp_socket local_socket,
                       internal_tcp_socket remote_socket) {

@@ -2,7 +2,7 @@
 
 This is an implementation of TCP/IP.
 
-## Threading
+##  Threading
 
 Main thread
 
@@ -78,4 +78,27 @@ ExecStart=/sbin/iptables-restore /etc/iptables.rules
 WantedBy=multi-user.target' > /etc/systemd/system/iptables-restore.service
 
 systemctl enable iptables-restore
+```
+
+
+#  Running
+
+
+To build the main `sockets` binary, run:
+
+```
+make bin/sockets
+```
+
+You can then run the binary. You'll need to be root, because this uses raw sockets.
+
+```
+./bin/sockets
+```
+
+To make life easier, you'll probably add the bin directory to your PATH by adding something like this to your preferred shell startup script (e.g. `~/.bsahrc` or `~/.zshrc`)
+
+```
+# Don't forget to replace /path/to/repo with the actual path to the repo on your machine!
+export PATH="/path/to/repo/tcp/bin:$PATH"
 ```

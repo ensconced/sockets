@@ -1,6 +1,5 @@
 # TODO
 
-- update Makefile to output binary as jc
 - make entrypoint of binary into a CLI which takes different subcommands:
   - no subcommand - quit with help info
   - `start` - spins up the tcp stack, running as a daemon
