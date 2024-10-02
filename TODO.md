@@ -1,17 +1,11 @@
 # TODO
 
-- make entrypoint of binary into a CLI which takes different subcommands:
-  - no subcommand - quit with help info
-  - `start` - spins up the tcp stack, running as a daemon
-  - `connect` - takes arguments for port and ip address, does active OPEN then sends data from stdin once connection is established
-  - `serve` - to open a passive connection (don't implement yet)
-
+- add new thread for daemon server, which sets up unix domain socket, and pushes events from unix domain socket to the shared mpsc queue
 - get e2e test against cloudflare working
 - abolish lib.c (this isn't a lib any more, it's a CLI binary, which depending on the args either starts a daemon, or sends commands to an existing daemon)
 - abolish `make serve` (or just rename to `make run` maybe?)
 - re-architect to use new queue approach for simplification of multithreading approach
 - remove all redundant mutexes (I think the only one we need now is the on the event queue)
-
 
 In the new setup, basically all the work will be done by the main thread.
 There are other helper threads, but all these do is push items onto the event queue.

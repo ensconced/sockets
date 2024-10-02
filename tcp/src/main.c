@@ -1,30 +1,100 @@
 #include "./config.h"
 #include "./tcp_stack.h"
+#include <errno.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
-int main(void) {
-  tcp_stack_create();
+#define SUBCOMMAND_COUNT 2
 
-  // TODO - this testing code is done directly in `main` for now. But
-  // eventually, this will become a daemon process whose only responsibility it
-  // to create the tcp stack, and to handle "actions" incoming on a unix domain
-  // socket, sent via a netcat-like CLI.
+char GENERAL_HELP_TEXT[] = "usage: sockets <subcommand>\n"
+                           "\n"
+                           "Available subcommands:\n"
+                           "\n"
+                           "start     Start the tcp stack as a daemon process\n"
+                           "help      Show this help output\n"
+                           "\n"
+                           "See 'sockets help <subcommand> to read about a specific subcommand.\n";
 
-  // tcp_socket local_socket = {.ipv4_addr = LOCAL_IP, .port = 48442};
-  // tcp_socket remote_socket = {.ipv4_addr = REMOTE_IP, .port = 80};
-  // tcp_connection *conn = tcp_open_active(stack, local_socket, remote_socket);
-  // // TODO - this is an absolute hack. Why is it necessary? I guess it's
-  // because
-  // // currently tcp_send literally just directly sends the TCP segment,
-  // instead
-  // // of enqueuing it or something???
-  // for (unsigned int i = 0; i < 429496729; i++)
-  //   ;
-  // char *data = "GET / HTTP/1.1\n\n";
-  // tcp_send(stack, conn, data, strlen(data));
-  // for (unsigned int i = 0; i < 4294967295; i++)
-  //   ;
+const char START_HELP_TEXT[] = "usage: sockets start";
+
+const char HELP_HELP_TEXT[] = "usage: sockets help";
+
+typedef struct subcommand {
+  const char *name;
+  int (*handler)(int argc, char *const *argv);
+  const char *help_text;
+} subcommand;
+
+int handle_start_subcommand(int argc, char *const *argv);
+int handle_help_subcommand(int argc, char *const *argv);
+
+subcommand subcommands[SUBCOMMAND_COUNT] = {
+    (subcommand){
+        .name = "start",
+        .handler = handle_start_subcommand,
+        .help_text = START_HELP_TEXT,
+    },
+    (subcommand){
+        .name = "help",
+        .handler = handle_help_subcommand,
+        .help_text = HELP_HELP_TEXT,
+    },
+};
+
+void quit_with_error(void) {
+  printf("%s", GENERAL_HELP_TEXT);
+  exit(1);
+}
+
+int handle_start_subcommand(int argc, char *const *argv) {
+  pid_t fork_pid = fork();
+  if (fork_pid == -1) {
+    fprintf(stderr, "Failed to create daemon process: %s", strerror(errno));
+    return 1;
+  }
+  if (fork_pid == 0) {
+    tcp_stack_create();
+  }
+  return 0;
+}
+
+int handle_help_subcommand(int argc, char *const *argv) {
+  if (argc > 0) {
+    char *command_to_help_with = argv[0];
+    for (int i = 0; i < SUBCOMMAND_COUNT; i++) {
+      if (!strcmp(command_to_help_with, subcommands[i].name)) {
+        printf("%s\n", subcommands[i].help_text);
+        return 0;
+      }
+    }
+  }
+
+  printf("%s", GENERAL_HELP_TEXT);
+  return 0;
+}
+
+int main(int argc, char *const argv[]) {
+  if (argc < 2) {
+    quit_with_error();
+  }
+
+  // Skip over binary name
+  argc--;
+  argv++;
+
+  // Get subcommand
+  char *subcommand = argv[0];
+  argc--;
+  argv++;
+
+  for (int i = 0; i < SUBCOMMAND_COUNT; i++) {
+    if (!strcmp(subcommand, subcommands[i].name)) {
+      return subcommands[i].handler(argc, argv);
+    }
+  }
+
+  quit_with_error();
 }
