@@ -19,6 +19,7 @@ typedef struct tcp_raw_socket_pool {
 
 typedef struct tcp_stack {
   atomic_bool *destroyed;
+  pthread_t daemon_server_thread;
   pthread_t incoming_datagram_handler_thread;
   tcp_connection_pool connection_pool;
   tcp_raw_socket raw_socket;

@@ -1,6 +1,7 @@
 {
   "files.associations": {
     "netdb.h": "c",
-    "if_ether.h": "c"
+    "if_ether.h": "c",
+    "un.h": "c"
   }
 }

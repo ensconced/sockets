@@ -1,5 +1,6 @@
 #include "./tcp_stack.h"
 #include "./config.h"
+#include "./daemon_server/daemon_server.h"
 #include "./error_handling/error_handling.h"
 #include "./process_event/process_event.h"
 #include "./receive_datagrams/receive_datagrams.h"
@@ -24,17 +25,15 @@ tcp_raw_socket tcp_raw_socket_create(void) {
     fprintf(stderr, "Failed to create socket: %s\n", strerror(errno));
     exit(1);
   }
-  pthread_mutex_t *socket_mutex =
-      checked_malloc(sizeof(pthread_mutex_t), "socket mutex");
+  pthread_mutex_t *socket_mutex = checked_malloc(sizeof(pthread_mutex_t), "socket mutex");
   int mutex_init_error = pthread_mutex_init(socket_mutex, NULL);
   if (mutex_init_error) {
     fprintf(stderr, "Failed to init mutex: %s\n", strerror(mutex_init_error));
     exit(1);
   };
-  uint8_t *socket_send_buffer = checked_malloc(
-      RAW_SOCKET_SEND_BUFFER_LEN * sizeof(uint8_t), "socket_send_buffer");
-  uint8_t *socket_receive_buffer = checked_malloc(
-      RAW_SOCKET_RECEIVE_BUFFER_LEN * sizeof(uint8_t), "socket_receive_buffer");
+  uint8_t *socket_send_buffer = checked_malloc(RAW_SOCKET_SEND_BUFFER_LEN * sizeof(uint8_t), "socket_send_buffer");
+  uint8_t *socket_receive_buffer =
+      checked_malloc(RAW_SOCKET_RECEIVE_BUFFER_LEN * sizeof(uint8_t), "socket_receive_buffer");
 
   return (tcp_raw_socket){
       .fd = ip_sock_fd,
@@ -61,8 +60,7 @@ void tcp_raw_socket_destroy(tcp_raw_socket *raw_socket) {
   free(raw_socket->receive_buffer.buffer);
   int mutex_destroy_result = pthread_mutex_destroy(raw_socket->mutex);
   if (mutex_destroy_result != 0) {
-    fprintf(stderr, "Failed to destroy mutex: %s\n",
-            strerror(mutex_destroy_result));
+    fprintf(stderr, "Failed to destroy mutex: %s\n", strerror(mutex_destroy_result));
     exit(1);
   };
 
@@ -76,8 +74,7 @@ void tcp_stack_create(void) {
     exit(1);
   }
 
-  atomic_bool *destroyed =
-      checked_malloc(sizeof(atomic_bool), "destroyed flag");
+  atomic_bool *destroyed = checked_malloc(sizeof(atomic_bool), "destroyed flag");
   atomic_init(destroyed, false);
 
   mpsc_queue *event_queue = mpsc_queue_create();
@@ -91,8 +88,12 @@ void tcp_stack_create(void) {
       .event_queue = event_queue,
   };
 
-  if (pthread_create(&stack->incoming_datagram_handler_thread, NULL,
-                     &receive_datagrams, stack) != 0) {
+  if (pthread_create(&stack->daemon_server_thread, NULL, &daemon_server, stack) != 0) {
+    fprintf(stderr, "Failed to create daemon server thread\n");
+    exit(1);
+  };
+
+  if (pthread_create(&stack->incoming_datagram_handler_thread, NULL, &receive_datagrams, stack) != 0) {
     fprintf(stderr, "Failed to create datagram handling thread\n");
     exit(1);
   };
@@ -112,6 +113,7 @@ void tcp_stack_create(void) {
 
 void tcp_stack_destroy(tcp_stack *stack) {
   atomic_store(stack->destroyed, true);
+  pthread_join(stack->daemon_server_thread, NULL);
   pthread_join(stack->incoming_datagram_handler_thread, NULL);
   free(stack->destroyed);
   EVP_MD_free(stack->md5_algorithm);
