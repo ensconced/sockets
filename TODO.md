@@ -1,9 +1,11 @@
 # TODO
 
+- review how destruction of resources in different threads works - should each helper thread have its own destruction function?
+- use sigaction to call stack destroy on sigterm/sigint
+- add better error message for when unix domain socket already exists on "socket start" (e.g. "daemon seems to already be running"?)
 - add new thread for daemon server, which sets up unix domain socket, and pushes events from unix domain socket to the shared mpsc queue
 - get e2e test against cloudflare working
 - abolish lib.c (this isn't a lib any more, it's a CLI binary, which depending on the args either starts a daemon, or sends commands to an existing daemon)
-- abolish `make serve` (or just rename to `make run` maybe?)
 - re-architect to use new queue approach for simplification of multithreading approach
 - remove all redundant mutexes (I think the only one we need now is the on the event queue)
 

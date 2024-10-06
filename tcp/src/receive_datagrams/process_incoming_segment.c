@@ -1,6 +1,6 @@
 #include "../constants.h"
 #include "../send_segment/send_segment.h"
-#include "../tcp_stack.h"
+#include "../tcp_stack/tcp_stack.h"
 #include "./segment.h"
 
 // typedef struct {
@@ -45,8 +45,7 @@
 //   // sequence number order.
 // }
 
-void process_incoming_segment(tcp_stack *stack, uint32_t source_address,
-                              uint32_t dest_address, tcp_segment segment) {
+void process_incoming_segment(tcp_stack *stack, uint32_t source_address, uint32_t dest_address, tcp_segment segment) {
   pthread_mutex_lock(stack->connection_pool.mutex);
   internal_tcp_socket local_socket = {
       .host_order_ipv4_addr = dest_address,
@@ -58,8 +57,7 @@ void process_incoming_segment(tcp_stack *stack, uint32_t source_address,
       .host_order_port = segment.source_port,
   };
 
-  tcp_connection *connection = tcp_connection_pool_find(
-      stack->connection_pool, local_socket, remote_socket);
+  tcp_connection *connection = tcp_connection_pool_find(stack->connection_pool, local_socket, remote_socket);
 
   if (connection != NULL) {
     // TODO - for now we're just assuming that we already have all the preceding

@@ -1,10 +1,10 @@
 #include "./tcp_stack.h"
-#include "./config.h"
-#include "./daemon_server/daemon_server.h"
-#include "./error_handling/error_handling.h"
-#include "./process_event/process_event.h"
-#include "./receive_datagrams/receive_datagrams.h"
-#include "./tcp_connection/tcp_connection_pool.h"
+#include "../config.h"
+#include "../daemon_server/daemon_server.h"
+#include "../error_handling/error_handling.h"
+#include "../process_event/process_event.h"
+#include "../receive_datagrams/receive_datagrams.h"
+#include "../tcp_connection/tcp_connection_pool.h"
 #include <errno.h>
 #include <linux/if_ether.h>
 #include <linux/if_packet.h>
@@ -67,7 +67,7 @@ void tcp_raw_socket_destroy(tcp_raw_socket *raw_socket) {
   free(raw_socket->mutex);
 }
 
-void tcp_stack_create(void) {
+tcp_stack *tcp_stack_create(void) {
   EVP_MD *md5_algorithm = EVP_MD_fetch(NULL, "MD5", "provider=default");
   if (md5_algorithm == NULL) {
     fprintf(stderr, "Failed to fetch md5 algorithm\n");
@@ -77,18 +77,23 @@ void tcp_stack_create(void) {
   atomic_bool *destroyed = checked_malloc(sizeof(atomic_bool), "destroyed flag");
   atomic_init(destroyed, false);
 
-  mpsc_queue *event_queue = mpsc_queue_create();
-
   tcp_stack *stack = checked_malloc(sizeof(tcp_stack), "tcp_stack");
   *stack = (tcp_stack){
       .connection_pool = tcp_connection_pool_create(),
       .raw_socket = tcp_raw_socket_create(),
       .md5_algorithm = md5_algorithm,
       .destroyed = destroyed,
-      .event_queue = event_queue,
+      .event_queue = mpsc_queue_create(),
+      .daemon_server = daemon_server_create(),
   };
 
-  if (pthread_create(&stack->daemon_server_thread, NULL, &daemon_server, stack) != 0) {
+  return stack;
+}
+
+void handle_sigterm(void) {}
+
+void tcp_stack_start(tcp_stack *stack) {
+  if (pthread_create(stack->daemon_server->thread, NULL, daemon_server_thread_entrypoint, stack) != 0) {
     fprintf(stderr, "Failed to create daemon server thread\n");
     exit(1);
   };
@@ -98,27 +103,22 @@ void tcp_stack_create(void) {
     exit(1);
   };
 
-  // pthread_t timeout_handler_thread_id;
-  // if (pthread_create(&timeout_handler_thread_id, NULL, handle_timeouts,
-  //                    connections) != 0) {
-  //   fprintf(stderr, "Failed to crzeate timeout handling thread\n");
-  //   exit(1);
-  // };
-
   while (!atomic_load(stack->destroyed)) {
-    void *event = mpsc_queue_dequeue(event_queue);
+    void *event = mpsc_queue_dequeue(stack->event_queue);
     process_event(stack, event);
   }
 }
 
 void tcp_stack_destroy(tcp_stack *stack) {
   atomic_store(stack->destroyed, true);
-  pthread_join(stack->daemon_server_thread, NULL);
+  pthread_join(*stack->daemon_server->thread, NULL);
+  daemon_server_destroy(stack->daemon_server);
   pthread_join(stack->incoming_datagram_handler_thread, NULL);
   free(stack->destroyed);
   EVP_MD_free(stack->md5_algorithm);
   tcp_raw_socket_destroy(&stack->raw_socket);
   pthread_mutex_lock(stack->connection_pool.mutex);
   tcp_connection_pool_destroy(&stack->connection_pool);
+  mpsc_queue_destroy(stack->event_queue);
   free(stack);
 }

@@ -5,5 +5,8 @@
 #define REMOTE_IP "1.1.1.1"
 
 #define DAEMON_SOCKET_LOCATION "/run/sockets.sock"
+#define DAEMON_SOCKET_CONNECTION_QUEUE_LEN 16
+#define DAEMON_SOCKET_MAX_CONNECTIONS 64
+#define DAEMON_SOCKET_POLL_TIMEOUT_MS 100
 
 #include <stdint.h>

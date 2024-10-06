@@ -1,6 +1,7 @@
 #include "./config.h"
-#include "./tcp_stack.h"
+#include "./tcp_stack/tcp_stack.h"
 #include <errno.h>
+#include <signal.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -56,7 +57,8 @@ int handle_start_subcommand(int argc, char *const *argv) {
     return 1;
   }
   if (fork_pid == 0) {
-    tcp_stack_create();
+    tcp_stack *stack = tcp_stack_create();
+    tcp_stack_start(stack);
   }
   return 0;
 }
@@ -85,7 +87,6 @@ int main(int argc, char *const argv[]) {
   argc--;
   argv++;
 
-  // Get subcommand
   char *subcommand = argv[0];
   argc--;
   argv++;

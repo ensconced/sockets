@@ -1,6 +1,6 @@
 #include "../checksum/checksum.h"
 #include "../config.h"
-#include "../tcp_stack.h"
+#include "../tcp_stack/tcp_stack.h"
 #include "../utils.h"
 #include "./process_incoming_segment.h"
 #include "./segment.h"
@@ -42,8 +42,7 @@ ip_datagram parse_datagram(vec datagram_vec) {
   uint8_t type_of_service = take_uint8_t(datagram_vec, &ptr);
   uint16_t network_order_total_length = take_uint16_t(datagram_vec, &ptr);
   uint16_t network_order_identification = take_uint16_t(datagram_vec, &ptr);
-  uint16_t flags_and_network_order_fragment_offset =
-      take_uint16_t(datagram_vec, &ptr);
+  uint16_t flags_and_network_order_fragment_offset = take_uint16_t(datagram_vec, &ptr);
   uint8_t ttl = take_uint8_t(datagram_vec, &ptr);
   uint8_t protocol = take_uint8_t(datagram_vec, &ptr);
   uint16_t network_order_header_checksum = take_uint16_t(datagram_vec, &ptr);
@@ -51,16 +50,14 @@ ip_datagram parse_datagram(vec datagram_vec) {
   uint32_t network_order_dest_address = take_uint32_t(datagram_vec, &ptr);
 
   size_t header_length_in_bytes = header_length_in_words * 4;
-  size_t options_length_in_bytes =
-      header_length_in_bytes - (HEADER_LENGTH_WITHOUT_OPTIONS_IN_WORDS * 4);
+  size_t options_length_in_bytes = header_length_in_bytes - (HEADER_LENGTH_WITHOUT_OPTIONS_IN_WORDS * 4);
   vec options_in_receive_buffer = {
       .buffer = ptr,
       .len = options_length_in_bytes,
   };
   ptr += options_length_in_bytes;
 
-  size_t data_length_in_bytes =
-      ntohs(network_order_total_length) - header_length_in_bytes;
+  size_t data_length_in_bytes = ntohs(network_order_total_length) - header_length_in_bytes;
   vec data_in_receive_buffer = {
       .buffer = ptr,
       .len = data_length_in_bytes,
@@ -72,8 +69,7 @@ ip_datagram parse_datagram(vec datagram_vec) {
       .type_of_service = type_of_service,
       .identification = ntohs(network_order_identification),
       .flags = flags_and_network_order_fragment_offset >> 13,
-      .fragment_offset =
-          ntohs(flags_and_network_order_fragment_offset & 0x1FFF),
+      .fragment_offset = ntohs(flags_and_network_order_fragment_offset & 0x1FFF),
       .ttl = ttl,
       .protocol = protocol,
       .header_checksum = ntohs(network_order_header_checksum),
@@ -89,8 +85,7 @@ tcp_segment parse_segment(vec segment_vec) {
   uint16_t network_order_source_port = take_uint16_t(segment_vec, &ptr);
   uint16_t network_order_dest_port = take_uint16_t(segment_vec, &ptr);
   uint32_t network_order_sequence_number = take_uint32_t(segment_vec, &ptr);
-  uint32_t network_order_acknowledgement_number =
-      take_uint32_t(segment_vec, &ptr);
+  uint32_t network_order_acknowledgement_number = take_uint32_t(segment_vec, &ptr);
   uint8_t data_offset_and_reserved_space = take_uint8_t(segment_vec, &ptr);
   uint8_t flags = take_uint8_t(segment_vec, &ptr);
   uint16_t network_order_window = take_uint16_t(segment_vec, &ptr);
@@ -133,12 +128,10 @@ bool verify_checksum(uint8_t *buffer, size_t header_length_in_32bit_words) {
 void *receive_datagrams(tcp_stack *stack) {
   while (!atomic_load(stack->destroyed)) {
     ssize_t bytes_received =
-        recv(stack->raw_socket.fd, stack->raw_socket.receive_buffer.buffer,
-             RAW_SOCKET_RECEIVE_BUFFER_LEN, 0);
+        recv(stack->raw_socket.fd, stack->raw_socket.receive_buffer.buffer, RAW_SOCKET_RECEIVE_BUFFER_LEN, 0);
 
     if (bytes_received == -1) {
-      fprintf(stderr, "Failed to receive from raw socket: %s\n",
-              strerror(errno));
+      fprintf(stderr, "Failed to receive from raw socket: %s\n", strerror(errno));
       exit(1);
     }
 
@@ -148,11 +141,9 @@ void *receive_datagrams(tcp_stack *stack) {
     });
 
     if (packet.protocol == IPPROTO_TCP &&
-        verify_checksum(stack->raw_socket.receive_buffer.buffer,
-                        packet.internet_header_length)) {
+        verify_checksum(stack->raw_socket.receive_buffer.buffer, packet.internet_header_length)) {
       tcp_segment segment = parse_segment(packet.data_in_receive_buffer);
-      process_incoming_segment(stack, packet.source_address,
-                               packet.dest_address, segment);
+      process_incoming_segment(stack, packet.source_address, packet.dest_address, segment);
     }
   }
   return NULL;

@@ -11,15 +11,14 @@
 #include "../config.h"
 #include "../constants.h"
 #include "../tcp_connection/tcp_connection.h"
-#include "../tcp_stack.h"
+#include "../tcp_stack/tcp_stack.h"
 #include "../utils.h"
 
 #define MAX_SEGMENT_SIZE 1024
 #define WINDOW 1024
 
-void write_tcp_segment(vec buffer, uint8_t **ptr, tcp_connection *conn,
-                       uint8_t *payload, size_t payload_len, uint8_t flags,
-                       uint32_t seq_number, uint32_t ack_number) {
+void write_tcp_segment(vec buffer, uint8_t **ptr, tcp_connection *conn, uint8_t *payload, size_t payload_len,
+                       uint8_t flags, uint32_t seq_number, uint32_t ack_number) {
   uint16_t source_port = htons(conn->local_socket.host_order_port);
   uint16_t dest_port = htons(conn->remote_socket.host_order_port);
   uint32_t seq = htonl(seq_number);
@@ -97,10 +96,8 @@ void write_tcp_segment(vec buffer, uint8_t **ptr, tcp_connection *conn,
   memcpy(checksum_ptr, &big_endian_checksum, sizeof(big_endian_checksum));
 }
 
-void write_ipv4_header(vec send_buffer, uint8_t **ptr,
-                       uint32_t host_order_source_address,
-                       uint32_t host_order_dest_address,
-                       uint8_t **total_length_ptr_result,
+void write_ipv4_header(vec send_buffer, uint8_t **ptr, uint32_t host_order_source_address,
+                       uint32_t host_order_dest_address, uint8_t **total_length_ptr_result,
                        uint8_t **checksum_ptr_result) {
   uint8_t version = 4;
   // TODO - compute this based on the options being used. This is the correct
@@ -142,40 +139,31 @@ uint32_t logical_segment_length(size_t payload_len, uint8_t flags) {
 }
 
 // TODO - should we use the tcp_segment type as the param here?
-void tcp_send_segment(tcp_stack *stack, tcp_connection *conn, uint8_t *payload,
-                      size_t payload_len, uint8_t flags) {
+void tcp_send_segment(tcp_stack *stack, tcp_connection *conn, uint8_t *payload, size_t payload_len, uint8_t flags) {
   pthread_mutex_lock(stack->raw_socket.mutex);
 
   uint8_t *ptr = stack->raw_socket.send_buffer.buffer;
 
   uint8_t *total_ip_packet_length_ptr;
   uint8_t *ip_header_checksum_ptr;
-  write_ipv4_header(stack->raw_socket.send_buffer, &ptr,
-                    conn->local_socket.host_order_ipv4_addr,
-                    conn->remote_socket.host_order_ipv4_addr,
-                    &total_ip_packet_length_ptr, &ip_header_checksum_ptr);
+  write_ipv4_header(stack->raw_socket.send_buffer, &ptr, conn->local_socket.host_order_ipv4_addr,
+                    conn->remote_socket.host_order_ipv4_addr, &total_ip_packet_length_ptr, &ip_header_checksum_ptr);
 
   // TODO - could return this from write_ipv4_header
-  uint16_t total_ip_header_length =
-      (uint16_t)(ptr - stack->raw_socket.send_buffer.buffer);
+  uint16_t total_ip_header_length = (uint16_t)(ptr - stack->raw_socket.send_buffer.buffer);
 
   uint32_t seq_number = conn->send_next;
   uint32_t ack_number = conn->receive_next;
-  write_tcp_segment(stack->raw_socket.send_buffer, &ptr, conn, payload,
-                    payload_len, flags, seq_number, ack_number);
+  write_tcp_segment(stack->raw_socket.send_buffer, &ptr, conn, payload, payload_len, flags, seq_number, ack_number);
 
-  uint16_t total_ip_packet_length =
-      (uint16_t)(ptr - stack->raw_socket.send_buffer.buffer);
+  uint16_t total_ip_packet_length = (uint16_t)(ptr - stack->raw_socket.send_buffer.buffer);
   uint16_t big_endian_total_ip_packet_length = htons(total_ip_packet_length);
-  memcpy(total_ip_packet_length_ptr, &big_endian_total_ip_packet_length,
-         sizeof(big_endian_total_ip_packet_length));
+  memcpy(total_ip_packet_length_ptr, &big_endian_total_ip_packet_length, sizeof(big_endian_total_ip_packet_length));
 
   uint32_t csum = 0;
-  checksum_update(&csum, stack->raw_socket.send_buffer.buffer,
-                  total_ip_header_length);
+  checksum_update(&csum, stack->raw_socket.send_buffer.buffer, total_ip_header_length);
   uint16_t big_endian_checksum = htons(checksum_finalize(&csum));
-  memcpy(ip_header_checksum_ptr, &big_endian_checksum,
-         sizeof(big_endian_checksum));
+  memcpy(ip_header_checksum_ptr, &big_endian_checksum, sizeof(big_endian_checksum));
 
   //  TODO - this could just be created once and kept on the tcp connection
   //  object?
@@ -195,9 +183,8 @@ void tcp_send_segment(tcp_stack *stack, tcp_connection *conn, uint8_t *payload,
       .sll_protocol = htons(ETH_P_IP),
   };
 
-  if (sendto(stack->raw_socket.fd, stack->raw_socket.send_buffer.buffer,
-             total_ip_packet_length, 0, (struct sockaddr *)(&dest_addr),
-             sizeof(dest_addr)) == -1) {
+  if (sendto(stack->raw_socket.fd, stack->raw_socket.send_buffer.buffer, total_ip_packet_length, 0,
+             (struct sockaddr *)(&dest_addr), sizeof(dest_addr)) == -1) {
     fprintf(stderr, "Failed to send IP packet: %s\n", strerror(errno));
   };
 
