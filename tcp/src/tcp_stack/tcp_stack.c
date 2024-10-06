@@ -111,9 +111,12 @@ void tcp_stack_start(tcp_stack *stack) {
 
 void tcp_stack_destroy(tcp_stack *stack) {
   atomic_store(stack->destroyed, true);
+
   pthread_join(*stack->daemon_server->thread, NULL);
   daemon_server_destroy(stack->daemon_server);
+
   pthread_join(stack->incoming_datagram_handler_thread, NULL);
+
   free(stack->destroyed);
   EVP_MD_free(stack->md5_algorithm);
   tcp_raw_socket_destroy(&stack->raw_socket);
