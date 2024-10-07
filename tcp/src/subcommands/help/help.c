@@ -13,13 +13,18 @@ char GENERAL_HELP_TEXT[] = "usage: sockets <subcommand>\n"
                            "\n"
                            "See 'sockets help <subcommand> to read about a specific subcommand.\n";
 
-const char START_HELP_TEXT[] = "usage: sockets start";
+const char START_HELP_TEXT[] = "USAGE\n"
+                               "  sockets start [options]\n"
+                               "\n"
+                               "OPTIONS\n"
+                               "  --detach\n"
+                               "    Run as a daemon process\n";
 
 const char STOP_HELP_TEXT[] = "usage: sockets stop";
 
 const char HELP_HELP_TEXT[] = "usage: sockets help";
 
-int handle_help_subcommand(int argc, char *const *argv) {
+int handle_help_subcommand(int argc, char **argv) {
   if (argc > 0) {
     char *command_to_help_with = argv[0];
     for (int i = 0; i < SUBCOMMAND_COUNT; i++) {

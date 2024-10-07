@@ -1,3 +1,3 @@
 #pragma once
 
-int handle_start_subcommand(int argc, char *const *argv);
+int handle_start_subcommand(int argc, char **argv);

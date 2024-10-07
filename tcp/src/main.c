@@ -10,7 +10,7 @@ void quit_with_error(void) {
   exit(1);
 }
 
-int main(int argc, char *const argv[]) {
+int main(int argc, char **argv) {
   if (argc < 2) {
     quit_with_error();
   }
@@ -20,8 +20,6 @@ int main(int argc, char *const argv[]) {
   argv++;
 
   char *subcommand = argv[0];
-  argc--;
-  argv++;
 
   for (int i = 0; i < SUBCOMMAND_COUNT; i++) {
     if (!strcmp(subcommand, subcommands[i].name)) {

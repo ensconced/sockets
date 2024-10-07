@@ -8,7 +8,7 @@
 
 typedef struct subcommand {
   const char *name;
-  int (*handler)(int argc, char *const *argv);
+  int (*handler)(int argc, char **argv);
   const char *help_text;
 } subcommand;
 

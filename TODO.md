@@ -1,5 +1,6 @@
 # TODO
 
+- resolve TODOs
 - implement `sockets stop`
 - review how destruction of resources in different threads works - should each helper thread have its own destruction function?
 - use sigaction to call stack destroy on sigterm/sigint
