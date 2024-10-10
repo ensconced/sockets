@@ -45,6 +45,8 @@ daemon_server *daemon_server_create(void) {
       .events = POLLIN,
   };
 
+  void *read_buffer = checked_malloc(DAEMON_SOCKET_READ_BUFFER_SIZE, "daemon server read buffer");
+
   pthread_t *thread = checked_malloc(sizeof(pthread_t), "daemon server thread");
 
   *server = (daemon_server){
@@ -52,23 +54,74 @@ daemon_server *daemon_server_create(void) {
       .poll_fds = poll_fds,
       .poll_fds_len = poll_fds_len,
       .thread = thread,
+      .read_buffer = read_buffer,
   };
 
   return server;
 }
 
+int accept_connection(daemon_server *server) {
+  if (server->poll_fds_len == POLL_FDS_CAPACITY) {
+    fprintf(stderr, "Exceeded POLL_FDS_CAPACITY\n");
+    exit(1);
+  } else {
+    int fd = accept(server->socket_fd, NULL, NULL);
+    if (fd == -1) {
+      fprintf(stderr, "Failed to accept connection on daemon server: %s\n", strerror(errno));
+      exit(1);
+    }
+    server->poll_fds[server->poll_fds_len++] = (struct pollfd){
+        .fd = fd,
+        .events = POLLIN,
+    };
+  }
+}
+
+uint8_t read_single_byte_or_close(daemon_server *server, int fd, size_t idx) {
+  uint8_t byte;
+  ssize_t bytes_read = read(fd, &byte, 1);
+  switch (bytes_read) {
+  case 1:
+    return byte;
+  case 0: {
+    if (close(fd) == -1) {
+      fprintf(stderr, "Failed to close fd: %s\n", strerror(errno));
+      exit(1);
+    } else {
+      // remove from pollfds
+      // TODO - this does mean the item that was at the end will end up getting skipped on this iteration of the for
+      // loop...
+      // ...this is probably fine though? Reaslistically it's not going to be a long list anyway...
+      server->poll_fds[idx] = server->poll_fds[server->poll_fds_len - 1];
+      server->poll_fds_len--;
+    }
+    break;
+  }
+  case -1: {
+    fprintf(stderr, "Failed to read byte: %s\n", strerror(errno));
+    exit(1);
+  }
+  default: {
+    fprintf(stderr, "Unexpected error reading byte\n");
+    exit(1);
+  }
+  }
+}
+
 void *daemon_server_thread_entrypoint(void *arg) {
   tcp_stack *stack = arg;
-  while (true) {
-    int ready_fds = poll(stack->daemon_server->poll_fds, 1, DAEMON_SOCKET_POLL_TIMEOUT_MS);
+  daemon_server *server = stack->daemon_server;
+  while (!atomic_load(stack->destroyed)) {
+    int ready_fds = poll(server->poll_fds, 1, DAEMON_SOCKET_POLL_TIMEOUT_MS);
     if (ready_fds > 0) {
-      for (int i = 0; i < stack->daemon_server->poll_fds_len; i++) {
-        struct pollfd poll_fd = stack->daemon_server->poll_fds[i];
+      for (size_t poll_fd_idx = 0; poll_fd_idx < server->poll_fds_len; poll_fd_idx++) {
+        struct pollfd poll_fd = server->poll_fds[poll_fd_idx];
         if (poll_fd.revents & POLLIN) {
-          if (poll_fd.fd == stack->daemon_server->socket_fd) {
-            // ready to accept a connection
+          if (poll_fd.fd == server->socket_fd) {
+            accept_connection(server);
           } else {
-            // ready to read from connection
+            uint8_t byte = read_single_byte_or_close(server, poll_fd.fd, poll_fd_idx);
+            // TODO - interpret byte as action, and apply action handler
           }
         }
       }
@@ -86,5 +139,6 @@ void daemon_server_destroy(daemon_server *server) {
   }
   free(server->poll_fds);
   free(server->thread);
+  free(server->read_buffer);
   free(server);
 }
