@@ -19,7 +19,7 @@
 #include <sys/socket.h>
 #include <unistd.h>
 
-tcp_raw_socket tcp_raw_socket_create(void) {
+tcp_raw_socket tcp_raw_socket_create() {
   int ip_sock_fd = socket(AF_PACKET, SOCK_DGRAM, htons(ETH_P_IP));
   if (ip_sock_fd == -1) {
     fprintf(stderr, "Failed to create socket: %s\n", strerror(errno));
@@ -67,7 +67,7 @@ void tcp_raw_socket_destroy(tcp_raw_socket *raw_socket) {
   free(raw_socket->mutex);
 }
 
-tcp_stack *tcp_stack_create(void) {
+tcp_stack *tcp_stack_create() {
   EVP_MD *md5_algorithm = EVP_MD_fetch(NULL, "MD5", "provider=default");
   if (md5_algorithm == NULL) {
     fprintf(stderr, "Failed to fetch md5 algorithm\n");
@@ -90,7 +90,7 @@ tcp_stack *tcp_stack_create(void) {
   return stack;
 }
 
-void handle_sigterm(void) {}
+void handle_sigterm() {}
 
 void tcp_stack_start(tcp_stack *stack) {
   if (pthread_create(stack->daemon_server->thread, NULL, daemon_server_thread_entrypoint, stack) != 0) {

@@ -34,7 +34,7 @@ void mpsc_queue_unlock(mpsc_queue *q) {
   }
 }
 
-mpsc_queue *mpsc_queue_create(void) {
+mpsc_queue *mpsc_queue_create() {
   mpsc_queue *q = checked_malloc(sizeof(mpsc_queue), "mpsc queue");
   pthread_mutex_t *mutex = checked_malloc(sizeof(pthread_mutex_t), "mpsc queue mutex");
   int mutex_init_error = pthread_mutex_init(mutex, NULL);

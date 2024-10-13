@@ -15,11 +15,10 @@ unsigned int test_key_len = 16;
 uint8_t expected_hash[16] = {0x8f, 0x8b, 0x70, 0xc1, 0x0b, 0x26, 0xa0, 0x18,
                              0x61, 0x45, 0x5f, 0x63, 0x5c, 0xc4, 0x8b, 0x20};
 
-void md5_test(void) {
+void md5_test() {
   EVP_MD *md5_algorithm = EVP_MD_fetch(NULL, "MD5", "provider=default");
   assert(md5_algorithm != NULL);
-  md5_result result = md5(md5_algorithm, local_ipv4, local_port, remote_ipv4,
-                          remote_port, test_key, test_key_len);
+  md5_result result = md5(md5_algorithm, local_ipv4, local_port, remote_ipv4, remote_port, test_key, test_key_len);
   assert(memcmp(&result.hash, &expected_hash, 16) == 0);
   EVP_MD_free(md5_algorithm);
 }

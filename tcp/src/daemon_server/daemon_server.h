@@ -19,6 +19,6 @@ typedef enum daemon_server_action {
   DAEMON_STOP,
 } daemon_server_action;
 
-daemon_server *daemon_server_create(void);
+daemon_server *daemon_server_create();
 void *daemon_server_thread_entrypoint(void *stack);
 void daemon_server_destroy(daemon_server *server);

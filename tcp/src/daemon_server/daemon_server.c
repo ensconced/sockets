@@ -15,7 +15,7 @@
 // One fd for each connection, plus one for the socket fd itself.
 #define POLL_FDS_CAPACITY (DAEMON_SOCKET_MAX_CONNECTIONS + 1)
 
-daemon_server *daemon_server_create(void) {
+daemon_server *daemon_server_create() {
   daemon_server *server = checked_malloc(sizeof(daemon_server), "daemon server");
 
   int socket_fd = socket(PF_LOCAL, SOCK_STREAM, 0);

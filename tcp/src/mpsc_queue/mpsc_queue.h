@@ -14,7 +14,7 @@ events.
 */
 typedef struct mpsc_queue mpsc_queue;
 
-mpsc_queue *mpsc_queue_create(void);
+mpsc_queue *mpsc_queue_create();
 
 void mpsc_queue_destroy(mpsc_queue *q);
 

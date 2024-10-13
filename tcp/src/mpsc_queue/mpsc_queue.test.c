@@ -6,7 +6,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-void mpsc_queue_basic_test(void) {
+void mpsc_queue_basic_test() {
   mpsc_queue *q = mpsc_queue_create();
 
   int val = 1;
@@ -15,7 +15,7 @@ void mpsc_queue_basic_test(void) {
   mpsc_queue_destroy(q);
 }
 
-void mpsc_queue_multiple_events_test(void) {
+void mpsc_queue_multiple_events_test() {
   mpsc_queue *q = mpsc_queue_create();
 
   int val1 = 1;
@@ -54,28 +54,23 @@ void *thread_entrypoint(void *arg) {
 
 int cmp(const void *a, const void *b) { return *(int *)a - *(int *)b; }
 
-void mpsc_queue_multithreaded_test(void) {
+void mpsc_queue_multithreaded_test() {
 
   int thread_count = 10;
   int vals_per_thread = 1000;
   mpsc_queue *q = mpsc_queue_create();
 
-  pthread_t **threads =
-      checked_malloc(sizeof(pthread_t *) * (size_t)thread_count, "threads");
+  pthread_t **threads = checked_malloc(sizeof(pthread_t *) * (size_t)thread_count, "threads");
   for (int i = 0; i < thread_count; i++) {
-    thread_context *context =
-        checked_malloc(sizeof(thread_context), "thread context");
+    thread_context *context = checked_malloc(sizeof(thread_context), "thread context");
     int start_val = i * vals_per_thread;
     int end_val = start_val + vals_per_thread;
-    *context =
-        (thread_context){.start_val = start_val, .end_val = end_val, .q = q};
+    *context = (thread_context){.start_val = start_val, .end_val = end_val, .q = q};
 
     pthread_t *thread = checked_malloc(sizeof(pthread_t), "thread");
-    int thread_create_error =
-        pthread_create(thread, NULL, thread_entrypoint, context);
+    int thread_create_error = pthread_create(thread, NULL, thread_entrypoint, context);
     if (thread_create_error) {
-      fprintf(stderr, "Failed to create thread: %s\n",
-              strerror(thread_create_error));
+      fprintf(stderr, "Failed to create thread: %s\n", strerror(thread_create_error));
       exit(1);
     }
 
@@ -93,8 +88,7 @@ void mpsc_queue_multithreaded_test(void) {
   free(threads);
 
   int expected_vals = thread_count * vals_per_thread;
-  int *queue_contents =
-      checked_malloc(sizeof(int) * (size_t)expected_vals, "queue contents");
+  int *queue_contents = checked_malloc(sizeof(int) * (size_t)expected_vals, "queue contents");
   for (int i = 0; i < expected_vals; i++) {
     int *val = mpsc_queue_dequeue(q);
     queue_contents[i] = *val;
@@ -111,7 +105,7 @@ void mpsc_queue_multithreaded_test(void) {
   mpsc_queue_destroy(q);
 }
 
-void mpsc_queue_test(void) {
+void mpsc_queue_test() {
   mpsc_queue_basic_test();
   mpsc_queue_multiple_events_test();
   mpsc_queue_multithreaded_test();

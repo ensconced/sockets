@@ -23,7 +23,7 @@ typedef struct buffer_entry {
   void *value;
 } buffer_entry;
 
-hash_map *hash_map_create(void);
+hash_map *hash_map_create();
 void hash_map_destroy(hash_map *hm);
 void hash_map_insert(hash_map *hm, void *key, size_t key_len, void *value);
 void *hash_map_get(hash_map *hm, void *key, size_t key_len);

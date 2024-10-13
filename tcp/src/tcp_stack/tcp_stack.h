@@ -29,6 +29,6 @@ typedef struct tcp_stack {
   pthread_t incoming_datagram_handler_thread;
 } tcp_stack;
 
-tcp_stack *tcp_stack_create(void);
+tcp_stack *tcp_stack_create();
 void tcp_stack_start(tcp_stack *stack);
 void tcp_stack_destroy(tcp_stack *stack);

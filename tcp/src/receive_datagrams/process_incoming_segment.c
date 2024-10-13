@@ -18,7 +18,7 @@
 // // each one needs to hold the mutex for the connections array to do anything
 // // with any of the connections...
 
-// ip_datagram take_ip_datagram(void) {
+// ip_datagram take_ip_datagram() {
 //   // TODO - I guess here take any datagrams tagged as being for the TCP
 //   // protocol?
 // }

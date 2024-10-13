@@ -1,5 +1,9 @@
 # TODO
 
+- decide on CLI options etc for `sockets open` and write help output
+could be like `sockets open <passive | active>` ?
+- then implement it
+
 - abolish lib.c (this isn't a lib any more, it's a CLI binary, which depending on the args either starts a daemon, or sends commands to an existing daemon)
 - re-architect to use new queue approach for simplification of multithreading approach
 - review how destruction of resources in different threads works - should each helper thread have its own destruction function?
@@ -77,7 +81,7 @@ will it need a mutex? I think not - we'll just use the connection pool mutex.
 i.e. I want to be able to use it like this:
 
 ```c
-int main(void) {
+int main() {
   // initialise the tcp stack. this will initialise some data structures and
   // spawn a couple of helper threads - one for receiving IP packets, and one for
   // handling timeouts.

@@ -34,10 +34,9 @@ uint32_t fnv1a_hash(void *data, size_t data_len) {
   return hash;
 }
 
-hash_map *hash_map_create(void) {
+hash_map *hash_map_create() {
   hash_map *hm = checked_malloc(sizeof(hash_map), "hash_map");
-  buffer_entry *buffer =
-      checked_calloc(INITIAL_BUFFER_LEN, sizeof(buffer_entry), "buffer_entry");
+  buffer_entry *buffer = checked_calloc(INITIAL_BUFFER_LEN, sizeof(buffer_entry), "buffer_entry");
   *hm = (hash_map){
       .buffer = buffer,
       .buffer_len = INITIAL_BUFFER_LEN,
@@ -51,8 +50,7 @@ void hash_map_destroy(hash_map *hm) {
   free(hm);
 }
 
-void hash_map_insert_key_value(hash_map *hm, void *key, size_t key_len,
-                               void *value) {
+void hash_map_insert_key_value(hash_map *hm, void *key, size_t key_len, void *value) {
   uint32_t idx = fnv1a_hash(key, key_len) % hm->buffer_len;
   while (hm->buffer[idx].type == occupied) {
     idx = (idx + 1) % hm->buffer_len;
@@ -70,8 +68,7 @@ void hash_map_insert_key_value(hash_map *hm, void *key, size_t key_len,
 }
 
 void hash_map_rehash(hash_map *hm, uint32_t new_buffer_len) {
-  buffer_entry *new_buffer =
-      checked_calloc(new_buffer_len, sizeof(buffer_entry), "buffer_entry");
+  buffer_entry *new_buffer = checked_calloc(new_buffer_len, sizeof(buffer_entry), "buffer_entry");
   hash_map new_hash_map = {
       .buffer = new_buffer,
       .buffer_len = new_buffer_len,
@@ -82,8 +79,7 @@ void hash_map_rehash(hash_map *hm, uint32_t new_buffer_len) {
   for (uint32_t i = 0; i < hm->buffer_len; i++) {
     buffer_entry entry = hm->buffer[i];
     if (entry.type == occupied) {
-      hash_map_insert_key_value(&new_hash_map, entry.key, entry.key_len,
-                                entry.value);
+      hash_map_insert_key_value(&new_hash_map, entry.key, entry.key_len, entry.value);
     }
   }
 
@@ -95,21 +91,16 @@ void hash_map_rehash(hash_map *hm, uint32_t new_buffer_len) {
 void hash_map_rehash_if_necessary(hash_map *hm) {
   // What would the load factor be if we added one more entry, assuming it
   // didn't take a tombstone place?
-  float new_load_factor =
-      (float)(hm->occupied_count + hm->tombstone_count + 1) /
-      (float)(hm->buffer_len);
+  float new_load_factor = (float)(hm->occupied_count + hm->tombstone_count + 1) / (float)(hm->buffer_len);
 
   if (new_load_factor >= MAX_LOAD_FACTOR) {
     // We need to re-hash. But should we increase the buffer length? That
     // depends on whether we would be exceeding the max load factor even when
     // all the tombstones are removed.
-    float new_load_factor_excluding_tombstones =
-        (float)(hm->occupied_count + 1) / (float)(hm->buffer_len);
+    float new_load_factor_excluding_tombstones = (float)(hm->occupied_count + 1) / (float)(hm->buffer_len);
 
     uint32_t new_buffer_len =
-        new_load_factor_excluding_tombstones >= MAX_LOAD_FACTOR
-            ? hm->buffer_len * 2
-            : hm->buffer_len;
+        new_load_factor_excluding_tombstones >= MAX_LOAD_FACTOR ? hm->buffer_len * 2 : hm->buffer_len;
 
     hash_map_rehash(hm, new_buffer_len);
   }
@@ -155,8 +146,7 @@ void hash_map_delete(hash_map *hm, void *key, size_t key_len) {
 
 // TODO - probably shouldn't exposure buffer_entry type...
 buffer_entry *hash_map_iterator_take(hash_map_iterator *iterator) {
-  while (iterator->idx < iterator->hm->buffer_len &&
-         iterator->hm->buffer[iterator->idx].type != occupied) {
+  while (iterator->idx < iterator->hm->buffer_len && iterator->hm->buffer[iterator->idx].type != occupied) {
     iterator->idx++;
   }
   if (iterator->idx == iterator->hm->buffer_len)
@@ -165,8 +155,7 @@ buffer_entry *hash_map_iterator_take(hash_map_iterator *iterator) {
 }
 
 hash_map_iterator *hash_map_iterator_create(hash_map *hm) {
-  hash_map_iterator *iter =
-      checked_malloc(sizeof(hash_map_iterator), "hash_map_iterator");
+  hash_map_iterator *iter = checked_malloc(sizeof(hash_map_iterator), "hash_map_iterator");
   *iter = (hash_map_iterator){
       .hm = hm,
       .idx = 0,

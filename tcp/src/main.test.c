@@ -1,9 +1,9 @@
-void md5_test(void);
-void hash_map_test(void);
-void checksum_test(void);
-void mpsc_queue_test(void);
+void md5_test();
+void hash_map_test();
+void checksum_test();
+void mpsc_queue_test();
 
-int main(void) {
+int main() {
   md5_test();
   hash_map_test();
   checksum_test();
