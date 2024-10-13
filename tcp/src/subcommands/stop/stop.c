@@ -8,7 +8,7 @@
 #include <sys/un.h>
 #include <unistd.h>
 
-int handle_stop_subcommand(int argc, char **argv) {
+int handle_stop_subcommand(int, char **) {
   int fd = socket(AF_LOCAL, SOCK_STREAM, 0);
   if (fd == -1) {
     fprintf(stderr, "Failed to create unix domain socket: %s\n", strerror(errno));
@@ -30,7 +30,7 @@ int handle_stop_subcommand(int argc, char **argv) {
     fprintf(stderr, "Failed to write to daemon server socket: %s\n", strerror(errno));
     exit(1);
   } else if (bytes_written != 1) {
-    fprintf(stderr, "Wrote %s bytes to daemon server instead of 1 as expected: %s\n");
+    fprintf(stderr, "Wrote %zd bytes to daemon server instead of 1 as expected\n", bytes_written);
     exit(1);
   }
   return 0;

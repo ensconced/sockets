@@ -9,7 +9,7 @@ CFLAGS=-Wall \
 	-Wimplicit-int \
 	-Wreserved-identifier \
 	-pedantic-errors \
-	-std=c17 \
+	-std=c23 \
 	-fsanitize=address,undefined \
 	-g \
 	-D_POSIX_C_SOURCE=200112L \

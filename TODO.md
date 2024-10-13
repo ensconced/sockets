@@ -1,12 +1,5 @@
 # TODO
 
-- daemon can now be killed like so:
-
-```
-echo -ne '\x0' | socat STDIN UNIX-CONNECT:/run/sockets.sock
-```
-
-- now we just need to build that into `sockets stop`
 - abolish lib.c (this isn't a lib any more, it's a CLI binary, which depending on the args either starts a daemon, or sends commands to an existing daemon)
 - re-architect to use new queue approach for simplification of multithreading approach
 - review how destruction of resources in different threads works - should each helper thread have its own destruction function?
