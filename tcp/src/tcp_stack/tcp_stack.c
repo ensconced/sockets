@@ -60,7 +60,7 @@ void tcp_raw_socket_destroy(tcp_raw_socket *raw_socket) {
   free(raw_socket->receive_buffer.buffer);
   int mutex_destroy_result = pthread_mutex_destroy(raw_socket->mutex);
   if (mutex_destroy_result != 0) {
-    fprintf(stderr, "Failed to destroy mutex: %s\n", strerror(mutex_destroy_result));
+    fprintf(stderr, "Failed to destroy raw socket mutex: %s\n", strerror(mutex_destroy_result));
     exit(1);
   };
 

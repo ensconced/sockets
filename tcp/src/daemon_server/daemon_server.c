@@ -39,7 +39,7 @@ daemon_server *daemon_server_create(void) {
   };
 
   struct pollfd *poll_fds = checked_malloc(POLL_FDS_CAPACITY * sizeof(struct pollfd), "daemon server poll fds");
-  int poll_fds_len = 1;
+  size_t poll_fds_len = 1;
   poll_fds[0] = (struct pollfd){
       .fd = socket_fd,
       .events = POLLIN,
@@ -60,8 +60,10 @@ daemon_server *daemon_server_create(void) {
   return server;
 }
 
-int accept_connection(daemon_server *server) {
+void accept_connection(daemon_server *server) {
   if (server->poll_fds_len == POLL_FDS_CAPACITY) {
+    // TODO - we probably shouldn't just die here. Instead we could reject the connection (by
+    // accepting and then immediately closing it).
     fprintf(stderr, "Exceeded POLL_FDS_CAPACITY\n");
     exit(1);
   } else {
@@ -77,21 +79,18 @@ int accept_connection(daemon_server *server) {
   }
 }
 
-uint8_t read_single_byte_or_close(daemon_server *server, int fd, size_t idx) {
-  uint8_t byte;
-  ssize_t bytes_read = read(fd, &byte, 1);
+bool read_single_byte_or_close(daemon_server *server, int fd, size_t idx, uint8_t *result) {
+  ssize_t bytes_read = read(fd, result, 1);
   switch (bytes_read) {
   case 1:
-    return byte;
+    return true;
   case 0: {
     if (close(fd) == -1) {
       fprintf(stderr, "Failed to close fd: %s\n", strerror(errno));
       exit(1);
     } else {
-      // remove from pollfds
-      // TODO - this does mean the item that was at the end will end up getting skipped on this iteration of the for
-      // loop...
-      // ...this is probably fine though? Reaslistically it's not going to be a long list anyway...
+      // Remove from pollfds. This does mean the item that was at the end will end up getting skipped on this iteration
+      // of the for loop. That shouldn't be a problem though.
       server->poll_fds[idx] = server->poll_fds[server->poll_fds_len - 1];
       server->poll_fds_len--;
     }
@@ -106,13 +105,14 @@ uint8_t read_single_byte_or_close(daemon_server *server, int fd, size_t idx) {
     exit(1);
   }
   }
+  return false;
 }
 
 void *daemon_server_thread_entrypoint(void *arg) {
   tcp_stack *stack = arg;
   daemon_server *server = stack->daemon_server;
   while (!atomic_load(stack->destroyed)) {
-    int ready_fds = poll(server->poll_fds, 1, DAEMON_SOCKET_POLL_TIMEOUT_MS);
+    int ready_fds = poll(server->poll_fds, server->poll_fds_len, DAEMON_SOCKET_POLL_TIMEOUT_MS);
     if (ready_fds > 0) {
       for (size_t poll_fd_idx = 0; poll_fd_idx < server->poll_fds_len; poll_fd_idx++) {
         struct pollfd poll_fd = server->poll_fds[poll_fd_idx];
@@ -120,8 +120,20 @@ void *daemon_server_thread_entrypoint(void *arg) {
           if (poll_fd.fd == server->socket_fd) {
             accept_connection(server);
           } else {
-            uint8_t byte = read_single_byte_or_close(server, poll_fd.fd, poll_fd_idx);
-            // TODO - interpret byte as action, and apply action handler
+            uint8_t byte;
+            if (read_single_byte_or_close(server, poll_fd.fd, poll_fd_idx, &byte)) {
+              switch (byte) {
+              case 'a': {
+                // TODO - we can't destroy from this thread - we need instead to enqueue an event to be handled by the
+                // main thread.
+                tcp_stack_destroy(stack);
+                break;
+              }
+              default: {
+                printf("%c", byte);
+              }
+              }
+            };
           }
         }
       }
@@ -130,6 +142,7 @@ void *daemon_server_thread_entrypoint(void *arg) {
       exit(1);
     }
   }
+  return NULL;
 }
 
 void daemon_server_destroy(daemon_server *server) {

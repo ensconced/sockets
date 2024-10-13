@@ -29,28 +29,23 @@ void mpsc_queue_lock(mpsc_queue *q) {
 void mpsc_queue_unlock(mpsc_queue *q) {
   int unlock_error = pthread_mutex_unlock(q->mutex);
   if (unlock_error) {
-    fprintf(stderr, "Failed to unlock mpsc queue: %s\n",
-            strerror(unlock_error));
+    fprintf(stderr, "Failed to unlock mpsc queue: %s\n", strerror(unlock_error));
     exit(1);
   }
 }
 
 mpsc_queue *mpsc_queue_create(void) {
   mpsc_queue *q = checked_malloc(sizeof(mpsc_queue), "mpsc queue");
-  pthread_mutex_t *mutex =
-      checked_malloc(sizeof(pthread_mutex_t), "mpsc queue mutex");
+  pthread_mutex_t *mutex = checked_malloc(sizeof(pthread_mutex_t), "mpsc queue mutex");
   int mutex_init_error = pthread_mutex_init(mutex, NULL);
   if (mutex_init_error) {
-    fprintf(stderr, "Failed to init mpsc queue mutex: %s\n",
-            strerror(mutex_init_error));
+    fprintf(stderr, "Failed to init mpsc queue mutex: %s\n", strerror(mutex_init_error));
     exit(1);
   }
-  pthread_cond_t *cond =
-      checked_malloc(sizeof(pthread_cond_t), "mpsc queue cond");
+  pthread_cond_t *cond = checked_malloc(sizeof(pthread_cond_t), "mpsc queue cond");
   int cond_init_error = pthread_cond_init(cond, NULL);
   if (cond_init_error) {
-    fprintf(stderr, "Failed to init mpsc queue cond: %s\n",
-            strerror(cond_init_error));
+    fprintf(stderr, "Failed to init mpsc queue cond: %s\n", strerror(cond_init_error));
     exit(1);
   }
   *q = (mpsc_queue){.front = NULL, .back = NULL, .mutex = mutex, .cond = cond};
@@ -67,8 +62,7 @@ void mpsc_queue_destroy(mpsc_queue *q) {
   }
   int mutex_destroy_error = pthread_mutex_destroy(q->mutex);
   if (mutex_destroy_error) {
-    fprintf(stderr, "Failed to destroy mutex: %s\n",
-            strerror(mutex_destroy_error));
+    fprintf(stderr, "Failed to destroy mpsc queue mutex: %s\n", strerror(mutex_destroy_error));
     exit(1);
   }
   free(q->mutex);
@@ -78,8 +72,7 @@ void mpsc_queue_destroy(mpsc_queue *q) {
 
 void mpsc_queue_enqueue(mpsc_queue *q, void *evt) {
   mpsc_queue_lock(q);
-  mpsc_queue_node *new_node =
-      checked_malloc(sizeof(mpsc_queue_node), "mpsc queue node");
+  mpsc_queue_node *new_node = checked_malloc(sizeof(mpsc_queue_node), "mpsc queue node");
   *new_node = (mpsc_queue_node){.evt = evt, .next = NULL};
   mpsc_queue_node *prev_back = q->back;
   q->back = new_node;

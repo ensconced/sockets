@@ -2,7 +2,8 @@
 
 - resolve TODOs
 - implement server-side of `sockets stop`
-- test server-side of `sockets stop` with `echo -ne '\x...' | socat UNIX-DOMAIN:/...`
+- test server-side of `sockets stop` with `echo 'hello world' | socat STDIN UNIX-CONNECT:/run/sock
+ets.sock`
 - review how destruction of resources in different threads works - should each helper thread have its own destruction function?
 - use sigaction to call stack destroy on sigterm/sigint
 - add better error message for when unix domain socket already exists on "socket start" (e.g. "daemon seems to already be running"?)

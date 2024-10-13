@@ -8,7 +8,7 @@ typedef struct tcp_stack tcp_stack;
 typedef struct daemon_server {
   int socket_fd;
   struct pollfd *poll_fds;
-  int poll_fds_len;
+  size_t poll_fds_len;
   pthread_t *thread;
   void *read_buffer;
 } daemon_server;
