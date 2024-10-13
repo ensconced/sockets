@@ -42,4 +42,5 @@ void process_event(tcp_stack *stack, event *evt) {
     exit(1);
   }
   }
+  free(evt);
 }

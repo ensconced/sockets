@@ -107,10 +107,6 @@ void tcp_stack_start(tcp_stack *stack) {
     void *event = mpsc_queue_dequeue(stack->event_queue);
     process_event(stack, event);
   }
-}
-
-void tcp_stack_destroy(tcp_stack *stack) {
-  atomic_store(stack->destroyed, true);
 
   pthread_join(*stack->daemon_server->thread, NULL);
   daemon_server_destroy(stack->daemon_server);
@@ -124,4 +120,9 @@ void tcp_stack_destroy(tcp_stack *stack) {
   tcp_connection_pool_destroy(&stack->connection_pool);
   mpsc_queue_destroy(stack->event_queue);
   free(stack);
+}
+
+void tcp_stack_destroy(tcp_stack *stack) {
+  printf("Destroying tcp stack...\n");
+  atomic_store(stack->destroyed, true);
 }

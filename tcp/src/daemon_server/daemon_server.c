@@ -1,5 +1,6 @@
 #include "../config.h"
 #include "../error_handling/error_handling.h"
+#include "../process_event/process_event.h"
 #include "../tcp_stack/tcp_stack.h"
 #include <errno.h>
 #include <poll.h>
@@ -108,6 +109,21 @@ bool read_single_byte_or_close(daemon_server *server, int fd, size_t idx, uint8_
   return false;
 }
 
+void handle_message(tcp_stack *stack, uint8_t message) {
+  switch (message) {
+  case SOCKET_MSG_DESTROY: {
+    event *destroy_event = checked_malloc(sizeof(event), "destroy event");
+    *destroy_event = (event){.type = EVENT_DESTROY_STACK};
+    mpsc_queue_enqueue(stack->event_queue, destroy_event);
+    break;
+  }
+  default: {
+    fprintf(stderr, "Invalid socket message: %d\n", message);
+    exit(1);
+  }
+  }
+}
+
 void *daemon_server_thread_entrypoint(void *arg) {
   tcp_stack *stack = arg;
   daemon_server *server = stack->daemon_server;
@@ -120,19 +136,9 @@ void *daemon_server_thread_entrypoint(void *arg) {
           if (poll_fd.fd == server->socket_fd) {
             accept_connection(server);
           } else {
-            uint8_t byte;
-            if (read_single_byte_or_close(server, poll_fd.fd, poll_fd_idx, &byte)) {
-              switch (byte) {
-              case 'a': {
-                // TODO - we can't destroy from this thread - we need instead to enqueue an event to be handled by the
-                // main thread.
-                tcp_stack_destroy(stack);
-                break;
-              }
-              default: {
-                printf("%c", byte);
-              }
-              }
+            uint8_t message;
+            if (read_single_byte_or_close(server, poll_fd.fd, poll_fd_idx, &message)) {
+              handle_message(stack, message);
             };
           }
         }

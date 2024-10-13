@@ -1,16 +1,19 @@
 # TODO
 
-- resolve TODOs
-- implement server-side of `sockets stop`
-- test server-side of `sockets stop` with `echo 'hello world' | socat STDIN UNIX-CONNECT:/run/sock
-ets.sock`
+- daemon can now be killed like so:
+
+```
+echo -ne '\x0' | socat STDIN UNIX-CONNECT:/run/sockets.sock
+```
+
+- now we just need to build that into `sockets stop`
+- abolish lib.c (this isn't a lib any more, it's a CLI binary, which depending on the args either starts a daemon, or sends commands to an existing daemon)
+- re-architect to use new queue approach for simplification of multithreading approach
 - review how destruction of resources in different threads works - should each helper thread have its own destruction function?
 - use sigaction to call stack destroy on sigterm/sigint
 - add better error message for when unix domain socket already exists on "socket start" (e.g. "daemon seems to already be running"?)
 - add new thread for daemon server, which sets up unix domain socket, and pushes events from unix domain socket to the shared mpsc queue
 - get e2e test against cloudflare working
-- abolish lib.c (this isn't a lib any more, it's a CLI binary, which depending on the args either starts a daemon, or sends commands to an existing daemon)
-- re-architect to use new queue approach for simplification of multithreading approach
 - remove all redundant mutexes (I think the only one we need now is the on the event queue)
 
 In the new setup, basically all the work will be done by the main thread.

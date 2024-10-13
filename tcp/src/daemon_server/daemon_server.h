@@ -3,6 +3,8 @@
 #include "../mpsc_queue/mpsc_queue.h"
 #include <pthread.h>
 
+enum SOCKET_MSG { SOCKET_MSG_DESTROY };
+
 typedef struct tcp_stack tcp_stack;
 
 typedef struct daemon_server {
