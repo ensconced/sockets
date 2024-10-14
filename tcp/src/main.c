@@ -5,8 +5,8 @@
 #include <stdio.h>
 #include <string.h>
 
-void quit_with_error() {
-  printf("%s", GENERAL_HELP_TEXT);
+static void quit_with_error() {
+  printf("%s\n", GENERAL_HELP_TEXT);
   exit(1);
 }
 

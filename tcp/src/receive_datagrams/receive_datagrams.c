@@ -33,7 +33,7 @@ typedef struct ip_datagram {
 
 // TODO - if an ip is fragmented, will the OS already have combined them by the
 // time I receive it? I think not - so I should really do it myself...
-ip_datagram parse_datagram(vec datagram_vec) {
+static ip_datagram parse_datagram(vec datagram_vec) {
   uint8_t *ptr = datagram_vec.buffer;
 
   uint8_t version_and_header_length = take_uint8_t(datagram_vec, &ptr);
@@ -80,7 +80,7 @@ ip_datagram parse_datagram(vec datagram_vec) {
   };
 }
 
-tcp_segment parse_segment(vec segment_vec) {
+static tcp_segment parse_segment(vec segment_vec) {
   uint8_t *ptr = segment_vec.buffer;
   uint16_t network_order_source_port = take_uint16_t(segment_vec, &ptr);
   uint16_t network_order_dest_port = take_uint16_t(segment_vec, &ptr);
@@ -107,19 +107,19 @@ tcp_segment parse_segment(vec segment_vec) {
       .checksum = ntohs(network_order_checksum),
       .urgent_pointer = ntohs(network_order_urgent_pointer),
       .options =
-          (vec){
+          {
               .buffer = options_ptr,
               .len = options_len,
           },
       .data =
-          (vec){
+          {
               .buffer = data_ptr,
               .len = data_len,
           },
   };
 }
 
-bool verify_checksum(uint8_t *buffer, size_t header_length_in_32bit_words) {
+static bool verify_checksum(uint8_t *buffer, size_t header_length_in_32bit_words) {
   uint32_t csum = 0;
   checksum_update(&csum, buffer, header_length_in_32bit_words * 4);
   return checksum_finalize(&csum) == 0;

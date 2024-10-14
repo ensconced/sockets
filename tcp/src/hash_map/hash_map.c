@@ -25,7 +25,7 @@ typedef struct hash_map_iterator {
   size_t idx;
 } hash_map_iterator;
 
-uint32_t fnv1a_hash(void *data, size_t data_len) {
+static uint32_t fnv1a_hash(void *data, size_t data_len) {
   uint32_t hash = FNV_OFFSET_BASIS;
   for (size_t i = 0; i < data_len; i++) {
     hash = hash ^ ((uint8_t *)data)[i];
@@ -67,7 +67,7 @@ void hash_map_insert_key_value(hash_map *hm, void *key, size_t key_len, void *va
   };
 }
 
-void hash_map_rehash(hash_map *hm, uint32_t new_buffer_len) {
+static void hash_map_rehash(hash_map *hm, uint32_t new_buffer_len) {
   buffer_entry *new_buffer = checked_calloc(new_buffer_len, sizeof(buffer_entry), "buffer_entry");
   hash_map new_hash_map = {
       .buffer = new_buffer,
@@ -88,7 +88,7 @@ void hash_map_rehash(hash_map *hm, uint32_t new_buffer_len) {
   *hm = new_hash_map;
 }
 
-void hash_map_rehash_if_necessary(hash_map *hm) {
+static void hash_map_rehash_if_necessary(hash_map *hm) {
   // What would the load factor be if we added one more entry, assuming it
   // didn't take a tombstone place?
   float new_load_factor = (float)(hm->occupied_count + hm->tombstone_count + 1) / (float)(hm->buffer_len);
@@ -106,7 +106,7 @@ void hash_map_rehash_if_necessary(hash_map *hm) {
   }
 }
 
-buffer_entry *hash_map_find_entry(hash_map *hm, void *key, size_t key_len) {
+static buffer_entry *hash_map_find_entry(hash_map *hm, void *key, size_t key_len) {
   uint32_t idx = fnv1a_hash(key, key_len) % hm->buffer_len;
   // The enforcement of the max load factor means that there are always some
   // empty entries and therefore this loop will always terminate.

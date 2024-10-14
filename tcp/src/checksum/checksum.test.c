@@ -5,7 +5,7 @@
 #include <stdio.h>
 #include <string.h>
 
-void checksum_test_1() {
+static void checksum_test_1() {
   uint32_t source_ip = htonl((192U << 24) | (168U << 16) | (174U << 8) | 128);
   uint32_t dest_ip = htonl((192U << 24) | (168U << 16) | (174U << 8) | 1);
 
@@ -28,7 +28,7 @@ void checksum_test_1() {
   assert(checksum_finalize(&checksum) == 0x67ea);
 }
 
-// void checksum_test_2() {
+// static void checksum_test_2() {
 //   uint32_t source_ip = (127 << 24) | 1;
 //   uint32_t dest_ip = (127 << 24) | 1;
 //   uint16_t data_len = 24;

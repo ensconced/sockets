@@ -24,7 +24,7 @@ daemon_server *daemon_server_create() {
     exit(1);
   }
 
-  struct sockaddr_un socket_address = (struct sockaddr_un){
+  struct sockaddr_un socket_address = {
       .sun_family = AF_LOCAL,
       .sun_path = DAEMON_SOCKET_LOCATION,
   };
@@ -61,7 +61,7 @@ daemon_server *daemon_server_create() {
   return server;
 }
 
-void accept_connection(daemon_server *server) {
+static void accept_connection(daemon_server *server) {
   if (server->poll_fds_len == POLL_FDS_CAPACITY) {
     // TODO - we probably shouldn't just die here. Instead we could reject the connection (by
     // accepting and then immediately closing it).
@@ -80,7 +80,7 @@ void accept_connection(daemon_server *server) {
   }
 }
 
-bool read_single_byte_or_close(daemon_server *server, int fd, size_t idx, uint8_t *result) {
+static bool read_single_byte_or_close(daemon_server *server, int fd, size_t idx, uint8_t *result) {
   ssize_t bytes_read = read(fd, result, 1);
   switch (bytes_read) {
   case 1:
@@ -109,7 +109,7 @@ bool read_single_byte_or_close(daemon_server *server, int fd, size_t idx, uint8_
   return false;
 }
 
-void handle_message(tcp_stack *stack, uint8_t message) {
+static void handle_message(tcp_stack *stack, uint8_t message) {
   switch (message) {
   case SOCKET_MSG_DESTROY: {
     event *destroy_event = checked_malloc(sizeof(event), "destroy event");

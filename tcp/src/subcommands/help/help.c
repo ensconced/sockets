@@ -3,28 +3,43 @@
 #include <stdio.h>
 #include <string.h>
 
-char GENERAL_HELP_TEXT[] = "usage: sockets <subcommand>\n"
-                           "\n"
-                           "Available subcommands:\n"
-                           "\n"
-                           "start     Start the tcp stack as a daemon process\n"
-                           "stop      Stop the tcp stack daemon process\n"
-                           "help      Show this help output\n"
-                           "\n"
-                           "See 'sockets help <subcommand> to read about a specific subcommand.\n";
+const char GENERAL_HELP_TEXT[] = "Usage:\n"
+                                 "  sockets <subcommand>\n"
+                                 "\n"
+                                 "Available subcommands:\n"
+                                 "\n"
+                                 "  start     Start the tcp stack\n"
+                                 "  stop      Stop the tcp stack\n"
+                                 "  help      Show this help output\n"
+                                 "  open      Create a new TCP connection\n"
+                                 "\n"
+                                 "See 'sockets help <subcommand> to read about a specific subcommand.";
 
 const char START_HELP_TEXT[] = "USAGE\n"
                                "  sockets start [options]\n"
                                "\n"
                                "OPTIONS\n"
                                "  --detach\n"
-                               "    Run as a daemon process\n";
+                               "    Run tcp stack in the background";
 
-const char STOP_HELP_TEXT[] = "usage: sockets stop";
+const char STOP_HELP_TEXT[] = "Usage:\n"
+                              "  sockets stop";
 
-const char HELP_HELP_TEXT[] = "usage: sockets help";
+const char OPEN_HELP_TEXT[] = "Usage:\n"
+                              "  socket open --local=<local addr>:<local port> [--remote=<local addr>:<local port>]\n"
+                              "\n"
+                              "This opens a TCP connection.\n"
+                              "If the --remote option is included, the connection is opened in \"active\" mode. "
+                              "Otherwise, the connection is opened in \"passive \" mode.";
+
+const char HELP_HELP_TEXT[] = "Usage:\n"
+                              "  sockets help";
 
 int handle_help_subcommand(int argc, char **argv) {
+  // Skip over "help" argument
+  argc--;
+  argv++;
+
   if (argc > 0) {
     char *command_to_help_with = argv[0];
     for (int i = 0; i < SUBCOMMAND_COUNT; i++) {
@@ -34,6 +49,6 @@ int handle_help_subcommand(int argc, char **argv) {
       }
     }
   }
-  printf("%s", GENERAL_HELP_TEXT);
+  printf("%s\n", GENERAL_HELP_TEXT);
   return 0;
 }

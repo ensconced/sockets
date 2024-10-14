@@ -19,7 +19,7 @@
 #include <sys/socket.h>
 #include <unistd.h>
 
-tcp_raw_socket tcp_raw_socket_create() {
+static tcp_raw_socket tcp_raw_socket_create() {
   int ip_sock_fd = socket(AF_PACKET, SOCK_DGRAM, htons(ETH_P_IP));
   if (ip_sock_fd == -1) {
     fprintf(stderr, "Failed to create socket: %s\n", strerror(errno));
@@ -39,19 +39,19 @@ tcp_raw_socket tcp_raw_socket_create() {
       .fd = ip_sock_fd,
       .mutex = socket_mutex,
       .send_buffer =
-          (vec){
+          {
               .buffer = socket_send_buffer,
               .len = RAW_SOCKET_SEND_BUFFER_LEN,
           },
       .receive_buffer =
-          (vec){
+          {
               .buffer = socket_receive_buffer,
               .len = RAW_SOCKET_RECEIVE_BUFFER_LEN,
           },
   };
 }
 
-void tcp_raw_socket_destroy(tcp_raw_socket *raw_socket) {
+static void tcp_raw_socket_destroy(tcp_raw_socket *raw_socket) {
   if (close(raw_socket->fd) != 0) {
     fprintf(stderr, "Failed to close raw socket: %s\n", strerror(errno));
     exit(1);
@@ -89,8 +89,6 @@ tcp_stack *tcp_stack_create() {
 
   return stack;
 }
-
-void handle_sigterm() {}
 
 void tcp_stack_start(tcp_stack *stack) {
   if (pthread_create(stack->daemon_server->thread, NULL, daemon_server_thread_entrypoint, stack) != 0) {

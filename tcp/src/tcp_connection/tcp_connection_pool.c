@@ -44,7 +44,7 @@ tcp_connection *tcp_connection_pool_find(tcp_connection_pool connection_pool, in
   return found;
 }
 
-void tcp_connection_pool_free_all_connections(tcp_connection_pool *connection_pool) {
+static void tcp_connection_pool_free_all_connections(tcp_connection_pool *connection_pool) {
   hash_map_iterator *listen_state_iter = hash_map_iterator_create(connection_pool->connections_in_listen_state);
   hash_map_iterator *not_listen_state_iter = hash_map_iterator_create(connection_pool->connections_not_in_listen_state);
 

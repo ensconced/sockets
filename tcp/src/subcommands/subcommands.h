@@ -1,10 +1,6 @@
 #pragma once
 
-#include "./help/help.h"
-#include "./start/start.h"
-#include "./stop/stop.h"
-
-#define SUBCOMMAND_COUNT 3
+#define SUBCOMMAND_COUNT 4
 
 typedef struct subcommand {
   const char *name;

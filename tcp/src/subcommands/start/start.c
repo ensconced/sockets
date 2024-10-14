@@ -9,21 +9,22 @@ typedef struct parsed_options {
   bool detach;
 } parsed_options;
 
-parsed_options default_options = (parsed_options){.detach = false};
+parsed_options default_options = {.detach = false};
 
-char optstring[] = "d";
+static const char optstring[] = "d";
 
-struct option longopts[] = {
-    (struct option){
+static const struct option longopts[] = {
+    {
         .name = "detach",
         .has_arg = no_argument,
         .flag = NULL,
         .val = 'd',
     },
     // sentinel value required by getopt_long to signify end of array
-    (struct option){0, 0, 0, 0},
+    {},
 };
-parsed_options parse_options(int argc, char **argv) {
+
+static parsed_options parse_options(int argc, char **argv) {
   parsed_options options = default_options;
   int opt = 0;
   while ((opt = getopt_long(argc, argv, optstring, longopts, NULL)) != -1) {

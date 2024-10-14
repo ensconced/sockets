@@ -14,7 +14,7 @@ int handle_stop_subcommand(int, char **) {
     fprintf(stderr, "Failed to create unix domain socket: %s\n", strerror(errno));
     exit(1);
   };
-  struct sockaddr_un socket_address = (struct sockaddr_un){
+  struct sockaddr_un socket_address = {
       .sun_family = AF_LOCAL,
       .sun_path = DAEMON_SOCKET_LOCATION,
   };

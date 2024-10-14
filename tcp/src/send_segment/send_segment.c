@@ -17,8 +17,8 @@
 #define MAX_SEGMENT_SIZE 1024
 #define WINDOW 1024
 
-void write_tcp_segment(vec buffer, uint8_t **ptr, tcp_connection *conn, uint8_t *payload, size_t payload_len,
-                       uint8_t flags, uint32_t seq_number, uint32_t ack_number) {
+static void write_tcp_segment(vec buffer, uint8_t **ptr, tcp_connection *conn, uint8_t *payload, size_t payload_len,
+                              uint8_t flags, uint32_t seq_number, uint32_t ack_number) {
   uint16_t source_port = htons(conn->local_socket.host_order_port);
   uint16_t dest_port = htons(conn->remote_socket.host_order_port);
   uint32_t seq = htonl(seq_number);
@@ -96,9 +96,9 @@ void write_tcp_segment(vec buffer, uint8_t **ptr, tcp_connection *conn, uint8_t 
   memcpy(checksum_ptr, &big_endian_checksum, sizeof(big_endian_checksum));
 }
 
-void write_ipv4_header(vec send_buffer, uint8_t **ptr, uint32_t host_order_source_address,
-                       uint32_t host_order_dest_address, uint8_t **total_length_ptr_result,
-                       uint8_t **checksum_ptr_result) {
+static void write_ipv4_header(vec send_buffer, uint8_t **ptr, uint32_t host_order_source_address,
+                              uint32_t host_order_dest_address, uint8_t **total_length_ptr_result,
+                              uint8_t **checksum_ptr_result) {
   uint8_t version = 4;
   // TODO - compute this based on the options being used. This is the correct
   // value when not using any options.
@@ -127,7 +127,7 @@ void write_ipv4_header(vec send_buffer, uint8_t **ptr, uint32_t host_order_sourc
   push_uint32_t(send_buffer, ptr, htonl(host_order_dest_address));
 }
 
-uint32_t logical_segment_length(size_t payload_len, uint8_t flags) {
+static uint32_t logical_segment_length(size_t payload_len, uint8_t flags) {
   uint32_t result = (uint32_t)payload_len;
   if (flags & SYN) {
     result++;
