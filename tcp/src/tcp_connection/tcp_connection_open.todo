@@ -1,0 +1,43 @@
+#include "../constants.h"
+#include "../tcp_stack/tcp_stack.h"
+#include "./tcp_connection.h"
+
+tcp_connection *tcp_open_passive(tcp_stack *stack, internal_tcp_socket local_socket) {
+  tcp_connection *conn = checked_malloc(sizeof(tcp_connection), "connection");
+
+  *conn = (tcp_connection){
+      .mode = PASSIVE,
+      .state = LISTEN,
+      .local_socket = local_socket,
+  };
+
+  tcp_connection_pool_add(stack->connection_pool, conn);
+  return conn;
+}
+
+tcp_connection *tcp_open_active(tcp_stack *stack, internal_tcp_socket local_socket, internal_tcp_socket remote_socket) {
+  tcp_connection *conn = checked_malloc(sizeof(tcp_connection), "tcp_connection");
+
+  uint32_t isn = generate_isn(stack, local_socket, remote_socket);
+
+  *conn = (tcp_connection){
+      .mode = ACTIVE,
+      .state = SYN_SENT,
+      .local_socket = local_socket,
+      .remote_socket = remote_socket,
+      .initial_send_sequence_number = isn,
+      .send_next = isn + 1,
+  };
+
+  tcp_connection_pool_add(stack->connection_pool, conn);
+  tcp_send_segment(stack, conn, NULL, 0, SYN);
+  conn->state = SYN_SENT;
+  return conn;
+}
+
+// TODO - eventually this will just push some data onto a buffer, to eventually
+// be sent by the underlying implementation, which will support re-sending etc.
+// but for now, it literally just sends the segment.
+void tcp_send(tcp_stack *stack, tcp_connection *conn, void *data, size_t data_size) {
+  tcp_send_segment(stack, conn, data, data_size, ACK);
+}

@@ -46,7 +46,6 @@
 // }
 
 void process_incoming_segment(tcp_stack *stack, uint32_t source_address, uint32_t dest_address, tcp_segment segment) {
-  pthread_mutex_lock(stack->connection_pool.mutex);
   internal_tcp_socket local_socket = {
       .host_order_ipv4_addr = dest_address,
       .host_order_port = segment.dest_port,
@@ -83,6 +82,4 @@ void process_incoming_segment(tcp_stack *stack, uint32_t source_address, uint32_
     }
     }
   }
-
-  pthread_mutex_unlock(stack->connection_pool.mutex);
 }

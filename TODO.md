@@ -1,8 +1,10 @@
 # TODO
 
-- implement active version of sockets open
-- abolish lib.c (this isn't a lib any more, it's a CLI binary, which depending on the args either starts a daemon, or sends commands to an existing daemon)
-- re-architect to use new queue approach for simplification of multithreading approach
+- extend daemon server to allow reading more than one byte at a time...
+- ...this is so I can serialize arguments to `sockets open` and send them to the daemon server
+- implement (hacky version of) active version of sockets open - as usual, the real work will be done on the main thread. see tcp_connection_open.todo
+- implement `socket receive`
+- write simple bash script for making HTTP request to e.g. 8.8.8.8:80 and showing response on stdout
 - review how destruction of resources in different threads works - should each helper thread have its own destruction function?
 - use sigaction to call stack destroy on sigterm/sigint
 - add better error message for when unix domain socket already exists on "socket start" (e.g. "daemon seems to already be running"?)

@@ -8,7 +8,6 @@
 typedef struct tcp_connection_pool {
   hash_map *connections_in_listen_state;
   hash_map *connections_not_in_listen_state;
-  pthread_mutex_t *mutex;
 } tcp_connection_pool;
 
 tcp_connection_pool tcp_connection_pool_create();

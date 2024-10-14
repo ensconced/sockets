@@ -114,7 +114,6 @@ void tcp_stack_start(tcp_stack *stack) {
   free(stack->destroyed);
   EVP_MD_free(stack->md5_algorithm);
   tcp_raw_socket_destroy(&stack->raw_socket);
-  pthread_mutex_lock(stack->connection_pool.mutex);
   tcp_connection_pool_destroy(&stack->connection_pool);
   mpsc_queue_destroy(stack->event_queue);
   free(stack);
