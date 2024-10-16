@@ -1,31 +1,16 @@
-#include "./config.h"
-#include "./subcommands/help/help.h"
-#include "./subcommands/subcommands.h"
-#include "./tcp_stack/tcp_stack.h"
+#include "./lib/lib.h"
 #include <stdio.h>
-#include <string.h>
 
-static void quit_with_error() {
-  printf("%s\n", GENERAL_HELP_TEXT);
-  exit(1);
-}
-
-int main(int argc, char **argv) {
-  if (argc < 2) {
-    quit_with_error();
-  }
-
-  // Skip over binary name
-  argc--;
-  argv++;
-
-  char *subcommand = argv[0];
-
-  for (int i = 0; i < SUBCOMMAND_COUNT; i++) {
-    if (!strcmp(subcommand, subcommands[i].name)) {
-      return subcommands[i].handler(argc, argv);
-    }
-  }
-
-  quit_with_error();
+int main() {
+  tcp_stack *stack = sockets_create_stack();
+  sockets_open_opts connection_opts = {
+      .local_address = "192.178.168.222",
+      .local_port = 1234,
+      .remote_address = "8.8.8.8",
+      .remote_port = 80,
+      .timeout_ms = 1000,
+      .mode = SOCKET_OPEN_MODE_ACTIVE,
+  };
+  tcp_connection *connection = sockets_open_connection(stack, connection_opts);
+  sockets_destroy_stack(stack);
 }

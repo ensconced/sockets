@@ -9,7 +9,6 @@
 #include <linux/if_packet.h>
 #include <netinet/in.h>
 #include <stdatomic.h>
-#include <stdbool.h>
 #include <stdio.h>
 #include <sys/socket.h>
 

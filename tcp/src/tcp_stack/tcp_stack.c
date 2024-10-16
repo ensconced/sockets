@@ -1,6 +1,5 @@
 #include "./tcp_stack.h"
 #include "../config.h"
-#include "../daemon_server/daemon_server.h"
 #include "../error_handling/error_handling.h"
 #include "../process_event/process_event.h"
 #include "../receive_datagrams/receive_datagrams.h"
@@ -84,31 +83,20 @@ tcp_stack *tcp_stack_create() {
       .md5_algorithm = md5_algorithm,
       .destroyed = destroyed,
       .event_queue = mpsc_queue_create(),
-      .daemon_server = daemon_server_create(),
   };
 
   return stack;
 }
 
 void tcp_stack_start(tcp_stack *stack) {
-  if (pthread_create(stack->daemon_server->thread, NULL, daemon_server_thread_entrypoint, stack) != 0) {
-    fprintf(stderr, "Failed to create daemon server thread\n");
-    exit(1);
-  };
-
   if (pthread_create(&stack->incoming_datagram_handler_thread, NULL, &receive_datagrams, stack) != 0) {
     fprintf(stderr, "Failed to create datagram handling thread\n");
     exit(1);
   };
+}
 
-  while (!atomic_load(stack->destroyed)) {
-    void *event = mpsc_queue_dequeue(stack->event_queue);
-    process_event(stack, event);
-  }
-
-  pthread_join(*stack->daemon_server->thread, NULL);
-  daemon_server_destroy(stack->daemon_server);
-
+void tcp_stack_destroy(tcp_stack *stack) {
+  atomic_store(stack->destroyed, true);
   pthread_join(stack->incoming_datagram_handler_thread, NULL);
 
   free(stack->destroyed);
@@ -117,9 +105,4 @@ void tcp_stack_start(tcp_stack *stack) {
   tcp_connection_pool_destroy(&stack->connection_pool);
   mpsc_queue_destroy(stack->event_queue);
   free(stack);
-}
-
-void tcp_stack_destroy(tcp_stack *stack) {
-  printf("Destroying tcp stack...\n");
-  atomic_store(stack->destroyed, true);
 }

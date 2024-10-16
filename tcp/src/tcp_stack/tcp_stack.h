@@ -1,7 +1,6 @@
 #pragma once
 
 #include "../config.h"
-#include "../daemon_server/daemon_server.h"
 #include "../mpsc_queue/mpsc_queue.h"
 #include "../tcp_connection/tcp_connection_pool.h"
 #include <openssl/evp.h>
@@ -21,7 +20,6 @@ typedef struct tcp_raw_socket_pool {
 
 typedef struct tcp_stack {
   atomic_bool *destroyed;
-  daemon_server *daemon_server;
   tcp_connection_pool connection_pool;
   tcp_raw_socket raw_socket;
   EVP_MD *md5_algorithm;

@@ -1,10 +1,19 @@
 # TODO
 
-- extend daemon server to allow reading more than one byte at a time...
-- ...this is so I can serialize arguments to `sockets open` and send them to the daemon server
+- do OPEN outside of the event queue system
+- i.e. create connection in main thread
+- the event queue will still be used for timeouts and receiving datagrams
+- but for creating connections (i.e. OPEN calls), the event queue won't be used
+- this does mean we'll need more mutexes...
+
+OR
+
+- block the caller?
+
+- use perror instead of fprintf/strerror
 - implement (hacky version of) active version of sockets open - as usual, the real work will be done on the main thread. see tcp_connection_open.todo
 - implement `socket receive`
-- write simple bash script for making HTTP request to e.g. 8.8.8.8:80 and showing response on stdout
+- write simple test for making HTTP request to e.g. 8.8.8.8:80 and showing response on stdout
 - review how destruction of resources in different threads works - should each helper thread have its own destruction function?
 - use sigaction to call stack destroy on sigterm/sigint
 - add better error message for when unix domain socket already exists on "socket start" (e.g. "daemon seems to already be running"?)

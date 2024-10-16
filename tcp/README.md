@@ -96,7 +96,7 @@ You can then run the binary. You'll need to be root, because this uses raw socke
 ./bin/sockets
 ```
 
-To make life easier, you'll probably add the bin directory to your PATH by adding something like this to your preferred shell startup script (e.g. `~/.bsahrc` or `~/.zshrc`)
+To make life easier, you'll probably add the bin directory to your PATH by adding something like this to your preferred shell startup script (e.g. `~/.bashrc` or `~/.zshrc`)
 
 ```
 # Don't forget to replace /path/to/repo with the actual path to the repo on your machine!

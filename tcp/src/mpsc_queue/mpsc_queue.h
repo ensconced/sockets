@@ -1,7 +1,5 @@
 #pragma once
 
-#include <stdbool.h>
-
 /*
 `mpsc` stands for "multiple producer, single consumer". This queue is threadsafe provided it is used
 in a "single-consumer, multiple producer" manner. i.e. `mpsc_queue_enqueue` can be called by many

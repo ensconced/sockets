@@ -1,6 +1,5 @@
 #pragma once
 
-#include <stdbool.h>
 #include <stdint.h>
 
 // returns boolean indicating whether `a` is less than `b` in the sense
