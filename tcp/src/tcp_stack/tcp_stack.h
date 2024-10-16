@@ -1,7 +1,6 @@
 #pragma once
 
 #include "../config.h"
-#include "../mpsc_queue/mpsc_queue.h"
 #include "../tcp_connection/tcp_connection_pool.h"
 #include <openssl/evp.h>
 #include <pthread.h>
@@ -23,7 +22,6 @@ typedef struct tcp_stack {
   tcp_connection_pool connection_pool;
   tcp_raw_socket raw_socket;
   EVP_MD *md5_algorithm;
-  mpsc_queue *event_queue;
   pthread_t incoming_datagram_handler_thread;
 } tcp_stack;
 

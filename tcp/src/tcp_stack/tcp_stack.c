@@ -82,7 +82,6 @@ tcp_stack *tcp_stack_create() {
       .raw_socket = tcp_raw_socket_create(),
       .md5_algorithm = md5_algorithm,
       .destroyed = destroyed,
-      .event_queue = mpsc_queue_create(),
   };
 
   return stack;
@@ -103,6 +102,5 @@ void tcp_stack_destroy(tcp_stack *stack) {
   EVP_MD_free(stack->md5_algorithm);
   tcp_raw_socket_destroy(&stack->raw_socket);
   tcp_connection_pool_destroy(&stack->connection_pool);
-  mpsc_queue_destroy(stack->event_queue);
   free(stack);
 }
