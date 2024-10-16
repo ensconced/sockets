@@ -1,14 +1,9 @@
 # TODO
 
-- do OPEN outside of the event queue system
-- i.e. create connection in main thread
-- the event queue will still be used for timeouts and receiving datagrams
-- but for creating connections (i.e. OPEN calls), the event queue won't be used
-- this does mean we'll need more mutexes...
+- currently main.c is quitting before SYN/ACK is actually received
+- need to add (blocking receive request) to actually be able to see the response
+- add back locks for raw socket & connection pool!!!
 
-OR
-
-- block the caller?
 
 - use perror instead of fprintf/strerror
 - implement (hacky version of) active version of sockets open - as usual, the real work will be done on the main thread. see tcp_connection_open.todo

@@ -31,7 +31,8 @@ This could be resolved by limiting the custom TCP implementation to a subset of 
 # The chosen IP address should be within your local network, should have the same subnet mask
 # configured on your local router, and should be outside of the range of addresses that your
 # local DHCP server is configured to assign to devices on your network. You'll need to run this as root.
-echo 'source /etc/network/interfaces.d/*
+cat << EOF > /etc/network/interfaces
+source /etc/network/interfaces.d/*
 
 source /etc/network/interfaces.d/*
 
@@ -40,7 +41,6 @@ auto lo
 iface lo inet loopback
 
 # The primary network interface.
-auto enp1s0
 iface enp1s0 inet static
     address 192.168.111.222/24
     gateway 192.168.111.1
@@ -51,6 +51,7 @@ iface enp1s0 inet static
 iface enp1s0 inet static
     address 192.168.111.221/24
     gateway 192.168.111.1
+EOF
 ```
 
 Normally, your primary address would probably be configured to be set up by DHCP, but in my experience this does not combine well with the secondary address being static; if one address is configured by DHCP and one is static, then most tools (e.g. curl, ping, and probably most other programs that involve any networking) will prefer to use the static one. In our case though, that would be the opposite of what we want; we want everything except our custom TCP implementation to use the primary address. Using static addresses in both cases simplifies this.
