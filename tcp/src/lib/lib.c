@@ -3,6 +3,7 @@
 #include "../error_handling/error_handling.h"
 #include "../isn_generation/generate_isn.h"
 #include "../process_event/process_event.h"
+#include "../request/request.h"
 #include "../send_segment/send_segment.h"
 #include <arpa/inet.h>
 #include <errno.h>
@@ -51,6 +52,8 @@ tcp_connection *sockets_open_connection(tcp_stack *stack, sockets_open_opts opts
 
   uint32_t isn = generate_isn(stack, local_socket, remote_socket);
 
+  request *connection_request = request_create();
+
   *conn = (tcp_connection){
       .mode = ACTIVE,
       .state = SYN_SENT,
@@ -58,10 +61,13 @@ tcp_connection *sockets_open_connection(tcp_stack *stack, sockets_open_opts opts
       .remote_socket = remote_socket,
       .initial_send_sequence_number = isn,
       .send_next = isn + 1,
+      .connection_request = connection_request,
   };
 
   tcp_connection_pool_add(stack->connection_pool, conn);
   tcp_send_segment(stack, conn, NULL, 0, SYN);
   conn->state = SYN_SENT;
+  request_block_until_resolved(connection_request);
+  request_destroy(connection_request);
   return conn;
 }

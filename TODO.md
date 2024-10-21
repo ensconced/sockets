@@ -1,16 +1,14 @@
 # TODO
 
-- currently main.c is quitting before SYN/ACK is actually received
-- make open call block until ESTABLISHED state is entered...
-- for this we'll use our nice new request struct...
-- after open call, send, receive data
-- add back locks for raw socket & connection pool!!!
+- after open call, send HTTP request
+- then do blocking receive...
+- add back missing locks for raw socket & connection pool!!!
 
 - implement send queue as per spec
 - open call shouldn't actually block - see spec - should return immediately after entering SYN-SENT state
 
 
-- use perror instead of fprintf/strerror
+- use perror instead of fprintf/strerror?
 - implement (hacky version of) active version of sockets open - as usual, the real work will be done on the main thread. see tcp_connection_open.todo
 - implement `socket receive`
 - write simple test for making HTTP request to e.g. 8.8.8.8:80 and showing response on stdout

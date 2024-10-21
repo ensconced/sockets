@@ -1,4 +1,5 @@
 #include "../constants.h"
+#include "../request/request.h"
 #include "../send_segment/send_segment.h"
 #include "../tcp_stack/tcp_stack.h"
 #include "./segment.h"
@@ -66,9 +67,9 @@ void process_incoming_segment(tcp_stack *stack, uint32_t source_address, uint32_
     switch (connection->state) {
     case SYN_SENT: {
       if ((segment.flags & SYN) && (segment.flags & ACK)) {
-        printf("received SYN/ACK\n");
         tcp_send_segment(stack, connection, NULL, 0, ACK);
         connection->state = ESTABLISHED;
+        request_resolve(connection->connection_request);
       }
       break;
     }
