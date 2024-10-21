@@ -71,3 +71,10 @@ tcp_connection *sockets_open_connection(tcp_stack *stack, sockets_open_opts opts
   request_destroy(connection_request);
   return conn;
 }
+
+void sockets_send(tcp_stack *stack, sockets_send_opts opts) {
+  // TODO - eventually this will just push some data onto a buffer, to eventually
+  // be sent by the underlying implementation, which will support re-sending etc.
+  // but for now, it literally just sends the segment.
+  tcp_send_segment(stack, opts.connection, opts.buffer, opts.byte_count, ACK);
+}

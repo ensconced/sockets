@@ -17,15 +17,15 @@ typedef struct sockets_open_opts {
 } sockets_open_opts;
 tcp_connection *sockets_open_connection(tcp_stack *stack, sockets_open_opts opts);
 
-// typedef struct sockets_send_opts {
-//   tcp_connection *connection;
-//   uint8_t *buffer;
-//   size_t byte_count;
-//   bool urgent;
-//   bool push;
-//   uint32_t timeout_ms;
-// } sockets_send_opts;
-// void sockets_send(sockets_send_opts opts);
+typedef struct sockets_send_opts {
+  tcp_connection *connection;
+  uint8_t *buffer;
+  size_t byte_count;
+  bool urgent;
+  bool push;
+  uint32_t timeout_ms;
+} sockets_send_opts;
+void sockets_send(tcp_stack *stack, sockets_send_opts opts);
 
 // typedef struct sockets_receive_opts {
 //   tcp_connection *connection;

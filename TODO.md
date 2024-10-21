@@ -1,7 +1,7 @@
 # TODO
 
-- after open call, send HTTP request
-- then do blocking receive...
+- in main.c do blocking receive, using `request` struct to block
+- move main.c into e2e tests
 - add back missing locks for raw socket & connection pool!!!
 
 - implement send queue as per spec
@@ -10,8 +10,6 @@
 
 - use perror instead of fprintf/strerror?
 - implement (hacky version of) active version of sockets open - as usual, the real work will be done on the main thread. see tcp_connection_open.todo
-- implement `socket receive`
-- write simple test for making HTTP request to e.g. 8.8.8.8:80 and showing response on stdout
 - review how destruction of resources in different threads works - should each helper thread have its own destruction function?
 - use sigaction to call stack destroy on sigterm/sigint
 - add better error message for when unix domain socket already exists on "socket start" (e.g. "daemon seems to already be running"?)
