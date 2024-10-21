@@ -1,8 +1,13 @@
 # TODO
 
 - currently main.c is quitting before SYN/ACK is actually received
-- need to add (blocking receive request) to actually be able to see the response
+- make open call block until ESTABLISHED state is entered...
+- for this we'll use our nice new request struct...
+- after open call, send, receive data
 - add back locks for raw socket & connection pool!!!
+
+- implement send queue as per spec
+- open call shouldn't actually block - see spec - should return immediately after entering SYN-SENT state
 
 
 - use perror instead of fprintf/strerror

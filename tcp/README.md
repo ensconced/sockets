@@ -34,13 +34,12 @@ This could be resolved by limiting the custom TCP implementation to a subset of 
 cat << EOF > /etc/network/interfaces
 source /etc/network/interfaces.d/*
 
-source /etc/network/interfaces.d/*
-
 # The loopback network interface
 auto lo
 iface lo inet loopback
 
 # The primary network interface.
+auto enp1s0
 iface enp1s0 inet static
     address 192.168.111.222/24
     gateway 192.168.111.1
@@ -48,9 +47,9 @@ iface enp1s0 inet static
 # Secondary network interface - used by my custom TCP implementation. We'll set up iptables
 # to block any traffic incoming on this address, so that it's exclusively handled by our
 # custom TCP implementation.
-iface enp1s0 inet static
+auto enp1s0:1
+iface enp1s0:1 inet static
     address 192.168.111.221/24
-    gateway 192.168.111.1
 EOF
 ```
 
