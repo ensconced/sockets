@@ -71,4 +71,10 @@ void request_resolve(request *req) {
     fprint(stderr, "Failed to signal cond\n");
     exit(1);
   }
+
+  int unlock_err = pthread_mutex_unlock(req->mutex);
+  if (unlock_err) {
+    fprintf(stderr, "Failed to unlock mutex\n");
+    exit(1);
+  }
 }
