@@ -1,7 +1,5 @@
 # TODO
 
-- add tests for request.c
-
 - currently main.c is quitting before SYN/ACK is actually received
 - make open call block until ESTABLISHED state is entered...
 - for this we'll use our nice new request struct...
