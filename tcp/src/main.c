@@ -2,6 +2,8 @@
 #include <stdio.h>
 #include <string.h>
 
+#define RECEIVE_BUFFER_SIZE 100
+
 int main() {
   tcp_stack *stack = sockets_create_stack();
 
@@ -17,11 +19,22 @@ int main() {
 
   char *http_request = "GET / HTTP/1.0\r\n\r\n";
   sockets_send_opts send_opts = {
-      .connection = connection,
       .buffer = (void *)http_request,
       .byte_count = strlen(http_request),
   };
-  sockets_send(stack, send_opts);
+  sockets_send(connection, send_opts);
+
+  void *receive_buffer = malloc(RECEIVE_BUFFER_SIZE);
+  if (receive_buffer == NULL) {
+    fprintf(stderr, "Failed to allocate receive buffer\n");
+    exit(1);
+  }
+  sockets_receive_opts recv_opts = {
+      .buffer = receive_buffer,
+      .buffer_size_bytes = RECEIVE_BUFFER_SIZE,
+  };
+  sockets_receive(connection, recv_opts);
+  free(receive_buffer);
 
   sockets_destroy_stack(stack);
 }

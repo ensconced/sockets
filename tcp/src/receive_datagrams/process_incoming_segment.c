@@ -75,7 +75,12 @@ void process_incoming_segment(tcp_stack *stack, uint32_t source_address, uint32_
     }
     case ESTABLISHED: {
       char *data = (char *)segment.data.data;
-      printf("omg actual data? %s\n", data);
+      request *req = connection->receive_request;
+      if (req) {
+        connection->receive_request = NULL;
+        request_resolve(req);
+      }
+
       break;
     }
     default: {

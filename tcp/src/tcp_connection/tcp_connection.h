@@ -6,6 +6,8 @@
 #include <stddef.h>
 #include <stdint.h>
 
+typedef struct tcp_stack tcp_stack;
+
 typedef enum tcp_conection_mode { PASSIVE, ACTIVE } tcp_connection_mode;
 
 typedef enum tcp_connection_state {
@@ -23,6 +25,7 @@ typedef enum tcp_connection_state {
 } tcp_connection_state;
 
 typedef struct tcp_connection {
+  tcp_stack *stack;
   tcp_connection_state state;
   tcp_connection_mode mode;
   internal_tcp_socket local_socket;
@@ -39,6 +42,7 @@ typedef struct tcp_connection {
   uint32_t receive_urgent_pointer;
   uint32_t initial_receive_sequence_number;
   request *connection_request;
+  request *receive_request;
 } tcp_connection;
 
 buffer tcp_connection_id_create(internal_tcp_socket local_socket, internal_tcp_socket remote_socket);

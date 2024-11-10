@@ -55,6 +55,7 @@ tcp_connection *sockets_open_connection(tcp_stack *stack, sockets_open_opts opts
   request *connection_request = request_create();
 
   *conn = (tcp_connection){
+      .stack = stack,
       .mode = ACTIVE,
       .state = SYN_SENT,
       .local_socket = local_socket,
@@ -72,9 +73,17 @@ tcp_connection *sockets_open_connection(tcp_stack *stack, sockets_open_opts opts
   return conn;
 }
 
-void sockets_send(tcp_stack *stack, sockets_send_opts opts) {
+void sockets_send(tcp_connection *connection, sockets_send_opts opts) {
   // TODO - eventually this will just push some data onto a buffer, to eventually
   // be sent by the underlying implementation, which will support re-sending etc.
   // but for now, it literally just sends the segment.
-  tcp_send_segment(stack, opts.connection, opts.buffer, opts.byte_count, ACK);
+  tcp_send_segment(connection->stack, connection, opts.buffer, opts.byte_count, ACK);
+}
+
+void sockets_receive(tcp_connection *connection, sockets_receive_opts opts) {
+  request *receive_request = request_create();
+  connection->receive_request = receive_request;
+  request_block_until_resolved(receive_request);
+  printf("request resolved!\n");
+  request_destroy(receive_request);
 }
