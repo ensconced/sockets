@@ -35,13 +35,13 @@ static tcp_raw_socket tcp_raw_socket_create() {
       .mutex = socket_mutex,
       .send_buffer =
           {
-              .buffer = socket_send_buffer,
-              .len = RAW_SOCKET_SEND_BUFFER_LEN,
+              .data = socket_send_buffer,
+              .size_bytes = RAW_SOCKET_SEND_BUFFER_LEN,
           },
       .receive_buffer =
           {
-              .buffer = socket_receive_buffer,
-              .len = RAW_SOCKET_RECEIVE_BUFFER_LEN,
+              .data = socket_receive_buffer,
+              .size_bytes = RAW_SOCKET_RECEIVE_BUFFER_LEN,
           },
   };
 }
@@ -51,8 +51,8 @@ static void tcp_raw_socket_destroy(tcp_raw_socket *raw_socket) {
     fprintf(stderr, "Failed to close raw socket: %s\n", strerror(errno));
     exit(1);
   }
-  free(raw_socket->send_buffer.buffer);
-  free(raw_socket->receive_buffer.buffer);
+  free(raw_socket->send_buffer.data);
+  free(raw_socket->receive_buffer.data);
   int mutex_destroy_result = pthread_mutex_destroy(raw_socket->mutex);
   if (mutex_destroy_result != 0) {
     fprintf(stderr, "Failed to destroy raw socket mutex: %s\n", strerror(mutex_destroy_result));

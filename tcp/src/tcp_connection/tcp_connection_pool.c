@@ -1,7 +1,7 @@
 #include "./tcp_connection_pool.h"
+#include "../buffer_state/buffer_state.h"
 #include "../error_handling/error_handling.h"
 #include "../hash_map/hash_map.h"
-#include "../utils.h"
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -15,27 +15,27 @@ tcp_connection_pool tcp_connection_pool_create() {
 }
 
 void tcp_connection_pool_add(tcp_connection_pool connection_pool, tcp_connection *connection) {
-  vec connection_id = tcp_connection_id_create(connection->local_socket, connection->remote_socket);
+  buffer connection_id = tcp_connection_id_create(connection->local_socket, connection->remote_socket);
   hash_map *hash_map_to_add_to = connection->mode == PASSIVE ? connection_pool.connections_in_listen_state
                                                              : connection_pool.connections_not_in_listen_state;
 
   // TODO - could optimise this with a `hash_map_insert_if_not_already_present`
   // function.
-  tcp_connection *existing_connection = hash_map_get(hash_map_to_add_to, connection_id.buffer, connection_id.len);
+  tcp_connection *existing_connection = hash_map_get(hash_map_to_add_to, connection_id.data, connection_id.size_bytes);
   if (existing_connection != NULL) {
     fprintf(stderr, "Connection already exists\n");
     exit(1);
   }
-  hash_map_insert(hash_map_to_add_to, connection_id.buffer, connection_id.len, connection);
+  hash_map_insert(hash_map_to_add_to, connection_id.data, connection_id.size_bytes, connection);
 }
 
 tcp_connection *tcp_connection_pool_find(tcp_connection_pool connection_pool, internal_tcp_socket local_socket,
                                          internal_tcp_socket remote_socket) {
-  vec connection_id = tcp_connection_id_create(local_socket, remote_socket);
+  buffer connection_id = tcp_connection_id_create(local_socket, remote_socket);
   tcp_connection *found =
-      hash_map_get(connection_pool.connections_not_in_listen_state, connection_id.buffer, connection_id.len);
+      hash_map_get(connection_pool.connections_not_in_listen_state, connection_id.data, connection_id.size_bytes);
   if (found == NULL) {
-    found = hash_map_get(connection_pool.connections_in_listen_state, connection_id.buffer, connection_id.len);
+    found = hash_map_get(connection_pool.connections_in_listen_state, connection_id.data, connection_id.size_bytes);
   }
   tcp_connection_id_destroy(connection_id);
   return found;

@@ -1,5 +1,6 @@
 #pragma once
 
+#include "../buffer_state/buffer_state.h"
 #include "../config.h"
 #include "../tcp_connection/tcp_connection_pool.h"
 #include <openssl/evp.h>
@@ -8,8 +9,8 @@
 
 typedef struct tcp_raw_socket {
   int fd;
-  vec send_buffer;
-  vec receive_buffer;
+  buffer send_buffer;
+  buffer receive_buffer;
   pthread_mutex_t *mutex;
 } tcp_raw_socket;
 

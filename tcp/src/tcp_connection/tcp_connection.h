@@ -1,8 +1,8 @@
 #pragma once
 
+#include "../buffer_state/buffer_state.h"
 #include "../request/request.h"
 #include "../tcp_socket.h"
-#include "../utils.h"
 #include <stddef.h>
 #include <stdint.h>
 
@@ -41,5 +41,5 @@ typedef struct tcp_connection {
   request *connection_request;
 } tcp_connection;
 
-vec tcp_connection_id_create(internal_tcp_socket local_socket, internal_tcp_socket remote_socket);
-void tcp_connection_id_destroy(vec connection_id);
+buffer tcp_connection_id_create(internal_tcp_socket local_socket, internal_tcp_socket remote_socket);
+void tcp_connection_id_destroy(buffer connection_id);

@@ -1,5 +1,6 @@
 #include "./lib/lib.h"
 #include <stdio.h>
+#include <string.h>
 
 int main() {
   tcp_stack *stack = sockets_create_stack();

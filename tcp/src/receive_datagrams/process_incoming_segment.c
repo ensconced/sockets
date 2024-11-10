@@ -74,7 +74,7 @@ void process_incoming_segment(tcp_stack *stack, uint32_t source_address, uint32_
       break;
     }
     case ESTABLISHED: {
-      char *data = (char *)segment.data.buffer;
+      char *data = (char *)segment.data.data;
       printf("omg actual data? %s\n", data);
       break;
     }

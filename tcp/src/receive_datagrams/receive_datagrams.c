@@ -1,7 +1,7 @@
+#include "../buffer_state/buffer_state.h"
 #include "../checksum/checksum.h"
 #include "../config.h"
 #include "../tcp_stack/tcp_stack.h"
-#include "../utils.h"
 #include "./process_incoming_segment.h"
 #include "./segment.h"
 #include <arpa/inet.h>
@@ -26,40 +26,40 @@ typedef struct ip_datagram {
   uint16_t header_checksum;
   uint32_t source_address;
   uint32_t dest_address;
-  vec options_in_receive_buffer;
-  vec data_in_receive_buffer;
+  buffer options_in_receive_buffer;
+  buffer data_in_receive_buffer;
 } ip_datagram;
 
 // TODO - if an ip is fragmented, will the OS already have combined them by the
 // time I receive it? I think not - so I should really do it myself...
-static ip_datagram parse_datagram(vec datagram_vec) {
-  uint8_t *ptr = datagram_vec.buffer;
+static ip_datagram parse_datagram(buffer datagram_vec) {
+  buffer_state reader = {.buffer = datagram_vec, .ptr = datagram_vec.data};
 
-  uint8_t version_and_header_length = take_uint8_t(datagram_vec, &ptr);
+  uint8_t version_and_header_length = take_uint8_t(&reader);
   uint8_t header_length_in_words = version_and_header_length & 0x0F;
 
-  uint8_t type_of_service = take_uint8_t(datagram_vec, &ptr);
-  uint16_t network_order_total_length = take_uint16_t(datagram_vec, &ptr);
-  uint16_t network_order_identification = take_uint16_t(datagram_vec, &ptr);
-  uint16_t flags_and_network_order_fragment_offset = take_uint16_t(datagram_vec, &ptr);
-  uint8_t ttl = take_uint8_t(datagram_vec, &ptr);
-  uint8_t protocol = take_uint8_t(datagram_vec, &ptr);
-  uint16_t network_order_header_checksum = take_uint16_t(datagram_vec, &ptr);
-  uint32_t network_order_source_address = take_uint32_t(datagram_vec, &ptr);
-  uint32_t network_order_dest_address = take_uint32_t(datagram_vec, &ptr);
+  uint8_t type_of_service = take_uint8_t(&reader);
+  uint16_t network_order_total_length = take_uint16_t(&reader);
+  uint16_t network_order_identification = take_uint16_t(&reader);
+  uint16_t flags_and_network_order_fragment_offset = take_uint16_t(&reader);
+  uint8_t ttl = take_uint8_t(&reader);
+  uint8_t protocol = take_uint8_t(&reader);
+  uint16_t network_order_header_checksum = take_uint16_t(&reader);
+  uint32_t network_order_source_address = take_uint32_t(&reader);
+  uint32_t network_order_dest_address = take_uint32_t(&reader);
 
   size_t header_length_in_bytes = header_length_in_words * 4;
   size_t options_length_in_bytes = header_length_in_bytes - (HEADER_LENGTH_WITHOUT_OPTIONS_IN_WORDS * 4);
-  vec options_in_receive_buffer = {
-      .buffer = ptr,
-      .len = options_length_in_bytes,
+  buffer options_in_receive_buffer = {
+      .data = reader.ptr,
+      .size_bytes = options_length_in_bytes,
   };
-  ptr += options_length_in_bytes;
+  reader.ptr = (char *)reader.ptr + options_length_in_bytes;
 
   size_t data_length_in_bytes = ntohs(network_order_total_length) - header_length_in_bytes;
-  vec data_in_receive_buffer = {
-      .buffer = ptr,
-      .len = data_length_in_bytes,
+  buffer data_in_receive_buffer = {
+      .data = reader.ptr,
+      .size_bytes = data_length_in_bytes,
   };
 
   return (ip_datagram){
@@ -79,22 +79,23 @@ static ip_datagram parse_datagram(vec datagram_vec) {
   };
 }
 
-static tcp_segment parse_segment(vec segment_vec) {
-  uint8_t *ptr = segment_vec.buffer;
-  uint16_t network_order_source_port = take_uint16_t(segment_vec, &ptr);
-  uint16_t network_order_dest_port = take_uint16_t(segment_vec, &ptr);
-  uint32_t network_order_sequence_number = take_uint32_t(segment_vec, &ptr);
-  uint32_t network_order_acknowledgement_number = take_uint32_t(segment_vec, &ptr);
-  uint8_t data_offset_and_reserved_space = take_uint8_t(segment_vec, &ptr);
-  uint8_t flags = take_uint8_t(segment_vec, &ptr);
-  uint16_t network_order_window = take_uint16_t(segment_vec, &ptr);
-  uint16_t network_order_checksum = take_uint16_t(segment_vec, &ptr);
-  uint16_t network_order_urgent_pointer = take_uint16_t(segment_vec, &ptr);
-  uint8_t *options_ptr = ptr;
+static tcp_segment parse_segment(buffer segment_vec) {
+  buffer_state reader = {.buffer = segment_vec, .ptr = segment_vec.data};
+
+  uint16_t network_order_source_port = take_uint16_t(&reader);
+  uint16_t network_order_dest_port = take_uint16_t(&reader);
+  uint32_t network_order_sequence_number = take_uint32_t(&reader);
+  uint32_t network_order_acknowledgement_number = take_uint32_t(&reader);
+  uint8_t data_offset_and_reserved_space = take_uint8_t(&reader);
+  uint8_t flags = take_uint8_t(&reader);
+  uint16_t network_order_window = take_uint16_t(&reader);
+  uint16_t network_order_checksum = take_uint16_t(&reader);
+  uint16_t network_order_urgent_pointer = take_uint16_t(&reader);
+  uint8_t *options_ptr = reader.ptr;
   uint8_t data_offset_in_words = data_offset_and_reserved_space >> 4;
-  uint8_t *data_ptr = segment_vec.buffer + data_offset_in_words * 4;
+  uint8_t *data_ptr = (uint8_t *)segment_vec.data + data_offset_in_words * 4;
   size_t options_len = (size_t)(data_ptr - options_ptr);
-  size_t data_len = segment_vec.len - (size_t)(data_ptr - segment_vec.buffer);
+  size_t data_len = segment_vec.size_bytes - (size_t)(data_ptr - (uint8_t *)segment_vec.data);
 
   return (tcp_segment){
       .source_port = ntohs(network_order_source_port),
@@ -107,13 +108,13 @@ static tcp_segment parse_segment(vec segment_vec) {
       .urgent_pointer = ntohs(network_order_urgent_pointer),
       .options =
           {
-              .buffer = options_ptr,
-              .len = options_len,
+              .data = options_ptr,
+              .size_bytes = options_len,
           },
       .data =
           {
-              .buffer = data_ptr,
-              .len = data_len,
+              .data = data_ptr,
+              .size_bytes = data_len,
           },
   };
 }
@@ -127,20 +128,20 @@ static bool verify_checksum(uint8_t *buffer, size_t header_length_in_32bit_words
 void *receive_datagrams(tcp_stack *stack) {
   while (!atomic_load(stack->destroyed)) {
     ssize_t bytes_received =
-        recv(stack->raw_socket.fd, stack->raw_socket.receive_buffer.buffer, RAW_SOCKET_RECEIVE_BUFFER_LEN, 0);
+        recv(stack->raw_socket.fd, stack->raw_socket.receive_buffer.data, RAW_SOCKET_RECEIVE_BUFFER_LEN, 0);
 
     if (bytes_received == -1) {
       fprintf(stderr, "Failed to receive from raw socket: %s\n", strerror(errno));
       exit(1);
     }
 
-    ip_datagram packet = parse_datagram((vec){
-        .buffer = stack->raw_socket.receive_buffer.buffer,
-        .len = (size_t)bytes_received,
+    ip_datagram packet = parse_datagram((buffer){
+        .data = stack->raw_socket.receive_buffer.data,
+        .size_bytes = (size_t)bytes_received,
     });
 
     if (packet.protocol == IPPROTO_TCP &&
-        verify_checksum(stack->raw_socket.receive_buffer.buffer, packet.internet_header_length)) {
+        verify_checksum(stack->raw_socket.receive_buffer.data, packet.internet_header_length)) {
       tcp_segment segment = parse_segment(packet.data_in_receive_buffer);
       process_incoming_segment(stack, packet.source_address, packet.dest_address, segment);
     }
